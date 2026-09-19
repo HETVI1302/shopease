@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5 pt-5 px-md-5 pb-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="display-6 fw-bold font-heading mb-1">User Management</h2>
+            <p class="text-muted">Manage customers, sellers, and delivery partners</p>
+        </div>
+    </div>
+    
+    <div class="row g-5">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2 mb-4">
+            <div class="glass-card p-4 rounded-4 sticky-top shadow-sm border-0 bg-surface" style="top: 100px;">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                        <i class="fa-solid fa-gauge-high text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold font-heading m-0">Admin</h5>
+                </div>
+                
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:dashboard' %}">
+                            <i class="fa-solid fa-chart-line"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:manage_orders' %}">
+                            <i class="fa-solid fa-box"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:returns_list' %}">
+                            <i class="fa-solid fa-rotate-left"></i> Returns
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="/admin-panel/products/">
+                            <i class="fa-solid fa-tags"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active rounded-pill bg-primary text-white fw-bold d-flex align-items-center gap-3 shadow-sm py-2 px-3" href="/admin-panel/users/">
+                            <i class="fa-solid fa-users"></i> Users
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9 col-xl-10">
+            <div class="glass-card rounded-4 p-4 p-md-5 shadow-sm border-0 bg-surface h-100">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+                    <h4 class="fw-bold font-heading m-0 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-users text-primary"></i> All Users <span class="badge bg-primary ms-2">{{ users.count }} Users</span>
+                    </h4>
+                    
+                    <form method="GET" action="{% url 'custom_admin:manage_users' %}" class="d-flex align-items-center gap-2">
+                        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Search by name, email, or role...">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        {% if search_query %}
+                            <a href="{% url 'custom_admin:manage_users' %}" class="btn btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead>
+                            <tr class="text-muted small text-uppercase tracking-wider border-bottom border-secondary border-opacity-25">
+                                <th class="pb-3 fw-bold ps-3">User</th>
+                                <th class="pb-3 fw-bold">Email</th>
+                                <th class="pb-3 fw-bold">Role</th>
+                                <th class="pb-3 fw-bold">Status</th>
+                                <th class="pb-3 fw-bold text-end pe-3">Date Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="border-bottom border-secondary border-opacity-10 hover-bg-light transition-all">
+                                <td class="py-3 ps-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                                            {{ user.username|make_list|first|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-body">{{ user.username }}</div>
+                                            <div class="small text-muted">ID: {{ user.id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <span class="text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ user.email|default:"N/A" }}</span>
+                                </td>
+                                <td class="py-3">
+                                    {% if user.role == 'ADMIN' or user.is_superuser %}
+                                        <span class="badge bg-danger text-white px-3 py-2 rounded-pill font-weight-bold">ADMIN</span>
+                                    {% elif user.role == 'DELIVERY' %}
+                                        <span class="badge bg-info text-dark px-3 py-2 rounded-pill font-weight-bold">DELIVERY PARTNER</span>
+                                    {% elif user.role == 'SELLER' %}
+                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-weight-bold">SELLER</span>
+                                    {% else %}
+                                        <span class="badge bg-primary text-white px-3 py-2 rounded-pill font-weight-bold">CUSTOMER</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    {% if user.is_active %}
+                                        <span class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
+                                    {% else %}
+                                        <span class="text-danger small fw-bold"><i class="fa-solid fa-circle-xmark me-1"></i> Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 text-end pe-3 text-muted small">
+                                    {{ user.date_joined|date:"M d, Y" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="text-muted d-flex flex-column align-items-center gap-2">
+                                        <i class="fa-solid fa-users fs-1 opacity-50 mb-2"></i>
+                                        <span>No users found.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .hover-bg-light:hover {
+        background-color: rgba(var(--bs-secondary-bg-rgb), 0.5);
+    }
+</style>
+{% endblock %}

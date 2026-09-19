@@ -1,0 +1,38 @@
+<!-- AI Chatbot Widget -->
+<div class="ai-chat-widget">
+    <!-- Chat Toggle Button -->
+    <button class="btn btn-primary rounded-circle shadow-lg chat-toggle-btn" id="aiChatToggle">
+        <i class="fa-solid fa-wand-magic-sparkles fs-4"></i>
+    </button>
+
+    <!-- Chat Window -->
+    <div class="glass-card chat-window rounded-4 shadow-lg d-none flex-column" id="aiChatWindow">
+        <!-- Header -->
+        <div class="chat-header p-3 border-bottom d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-robot fs-5"></i>
+                <h6 class="mb-0 fw-bold font-outfit">ShopEase AI</h6>
+            </div>
+            <button class="btn-close btn-close-white" id="aiChatClose"></button>
+        </div>
+        
+        <!-- Messages Area -->
+        <div class="chat-messages p-3 flex-grow-1 overflow-auto" id="aiChatMessages">
+            <div class="message ai-message mb-3 animate-up">
+                <div class="chat-bubble bot p-3 rounded-3 rounded-top-left-0 d-inline-block shadow-sm">
+                    Hi there! 👋 I'm your ShopEase AI assistant. How can I help you find the perfect product today?
+                </div>
+            </div>
+        </div>
+        
+        <!-- Input Area -->
+        <div class="chat-input p-3 border-top rounded-bottom-4" style="background-color: var(--surface-bg);">
+            <form id="aiChatForm" class="d-flex gap-2">
+                <input type="text" class="form-control glass-input rounded-pill" id="aiChatInput" placeholder="Ask me anything..." required>
+                <button type="submit" class="btn btn-primary rounded-circle px-3">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

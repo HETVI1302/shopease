@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="glass-card p-5 rounded-4 shadow-lg border-top border-primary border-4">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold font-outfit text-primary" data-i18n="register_title">Join ShopEase</h2>
+                    <p class="text-muted" data-i18n="register_subtitle">Create your account to continue</p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-pill" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" action="{% url 'accounts:register' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" data-i18n="role_select">I am a...</label>
+                        <select name="role" id="roleSelect" class="form-select glass-input rounded-pill">
+                            <option value="CUSTOMER" data-i18n="role_customer">Customer (Shopper)</option>
+                            <option value="SELLER" data-i18n="role_seller">Seller (Store Admin)</option>
+                            <option value="DELIVERY_PARTNER" data-i18n="role_delivery">Delivery Partner (Rider)</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <input type="text" name="first_name" class="form-control glass-input rounded-pill" placeholder="First Name" required data-i18n-placeholder="first_name">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="last_name" class="form-control glass-input rounded-pill" placeholder="Last Name" required data-i18n-placeholder="last_name">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <input type="text" name="username" class="form-control glass-input rounded-pill" placeholder="Username" required data-i18n-placeholder="username">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="email" name="email" class="form-control glass-input rounded-pill" placeholder="Email Address" required data-i18n-placeholder="email">
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted d-none">Password</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="regPassword" class="form-control glass-input rounded-start-pill" placeholder="Password" required data-i18n-placeholder="password">
+                            <button class="btn btn-outline-secondary toggle-password rounded-end-pill glass-input border-start-0" type="button" data-target="regPassword">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password Field -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted d-none">Confirm Password</label>
+                        <div class="input-group">
+                            <input type="password" name="confirm_password" id="regConfirmPassword" class="form-control glass-input rounded-start-pill" placeholder="Confirm Password" required data-i18n-placeholder="confirm_password">
+                            <button class="btn btn-outline-secondary toggle-password rounded-end-pill glass-input border-start-0" type="button" data-target="regConfirmPassword">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <small id="passwordMatchMessage" class="text-danger d-none mt-1">Passwords do not match!</small>
+                    </div>
+
+                    <!-- Dynamic Fields (Hidden by default) -->
+                    <div id="deliveryFields" class="d-none bg-light p-3 rounded-4 mb-4 border">
+                        <h6 class="fw-bold text-muted mb-3" data-i18n="delivery_details">Delivery Partner Details</h6>
+                        <div class="mb-3">
+                            <input type="text" name="phone_number" id="phoneInput" class="form-control glass-input rounded-pill" placeholder="Phone Number (e.g. 9876543210)" data-i18n-placeholder="phone_number">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="vehicle_number" id="vehicleInput" class="form-control glass-input rounded-pill" placeholder="Vehicle Reg. (e.g. MH-01-AB-1234)" data-i18n-placeholder="vehicle_number">
+                        </div>
+                    </div>
+                    
+                    <!-- Seller Specific Fields -->
+                    <div id="sellerFields" class="d-none bg-light p-3 rounded-4 mb-4 border">
+                        <h6 class="fw-bold text-muted mb-3" data-i18n="seller_details">Store Details</h6>
+                        <div class="mb-3">
+                            <input type="text" name="store_name" id="storeNameInput" class="form-control glass-input rounded-pill" placeholder="Store / Business Name" data-i18n-placeholder="store_name">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="phone_number_seller" id="phoneInputSeller" class="form-control glass-input rounded-pill" placeholder="Business Phone Number" data-i18n-placeholder="business_phone">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 mb-3 shadow" data-i18n="register_btn">Register Now</button>
+                    
+                    <p class="text-center text-muted small mb-0">
+                        <span data-i18n="already_have_account">Already have an account?</span> 
+                        <a href="{% url 'accounts:login' %}" class="text-decoration-none fw-bold" data-i18n="login_here">Login here</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('roleSelect');
+    const deliveryFields = document.getElementById('deliveryFields');
+    const sellerFields = document.getElementById('sellerFields');
+    const phoneInput = document.getElementById('phoneInput');
+    const vehicleInput = document.getElementById('vehicleInput');
+    const storeNameInput = document.getElementById('storeNameInput');
+    const phoneInputSeller = document.getElementById('phoneInputSeller');
+    
+    // Check URL parameters for role
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    if (roleParam === 'SELLER') {
+        roleSelect.value = 'SELLER';
+    }
+
+    function updateFields() {
+        if (roleSelect.value === 'DELIVERY_PARTNER') {
+            deliveryFields.classList.remove('d-none');
+            sellerFields.classList.add('d-none');
+            
+            phoneInput.setAttribute('required', 'required');
+            vehicleInput.setAttribute('required', 'required');
+            
+            storeNameInput.removeAttribute('required');
+            phoneInputSeller.removeAttribute('required');
+        } else if (roleSelect.value === 'SELLER') {
+            sellerFields.classList.remove('d-none');
+            deliveryFields.classList.add('d-none');
+            
+            storeNameInput.setAttribute('required', 'required');
+            phoneInputSeller.setAttribute('required', 'required');
+            
+            phoneInput.removeAttribute('required');
+            vehicleInput.removeAttribute('required');
+        } else {
+            deliveryFields.classList.add('d-none');
+            sellerFields.classList.add('d-none');
+            
+            phoneInput.removeAttribute('required');
+            vehicleInput.removeAttribute('required');
+            storeNameInput.removeAttribute('required');
+            phoneInputSeller.removeAttribute('required');
+        }
+    }
+    
+    roleSelect.addEventListener('change', updateFields);
+    
+    // Initial call to set correct fields on load
+    updateFields();
+
+    // Password Toggle & Match Logic
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function () {
+            const inputId = this.getAttribute('data-target');
+            const input = document.getElementById(inputId);
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    });
+
+    const passInput = document.getElementById('regPassword');
+    const confirmPassInput = document.getElementById('regConfirmPassword');
+    const matchMessage = document.getElementById('passwordMatchMessage');
+
+    function checkPasswordsMatch() {
+        if (confirmPassInput.value && passInput.value !== confirmPassInput.value) {
+            matchMessage.classList.remove('d-none');
+            confirmPassInput.classList.add('is-invalid');
+        } else {
+            matchMessage.classList.add('d-none');
+            confirmPassInput.classList.remove('is-invalid');
+        }
+    }
+
+    passInput.addEventListener('input', checkPasswordsMatch);
+    confirmPassInput.addEventListener('input', checkPasswordsMatch);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}My Orders - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 pb-5">
+  <div class="row mb-4">
+    <div class="col-12 text-center text-md-start">
+      <h2 class="display-6 fw-bold font-heading mb-1 text-dark">My Orders</h2>
+      <p class="text-muted">View and track your recent purchases</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      {% for order in orders %}
+      {% with return_req=order.return_requests.first %}
+      <div
+        class="glass-card rounded-4 p-4 p-md-5 mb-4 border border-pink shadow-sm bg-surface position-relative overflow-hidden">
+
+        <!-- Top Header: Order ID, Status & Total -->
+        <div
+          class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom">
+          <div class="mb-3 mb-md-0">
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+              <h4 class="fw-bold font-heading m-0 me-2 text-dark">Order #{{ order.id }}</h4>
+
+              <!-- Primary Status Badge -->
+              {% if return_req and return_req.status == 'REJECTED' %}
+              <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase tracking-wider border bg-danger text-white"
+                style="font-size: 0.75rem;">
+                Return Rejected
+              </span>
+              {% else %}
+              <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase tracking-wider border text-dark"
+                style="font-size: 0.75rem;">
+                {% if return_req %}
+                Return {{ return_req.get_status_display|default:return_req.status }}
+                {% elif order.status == 'DELIVERED' or order.status == 'Delivered' %}
+                Delivered
+                {% elif order.status == 'PICKED_UP' or order.status == 'Picked Up' %}
+                Item Picked Up
+                {% elif order.status == 'OUT_FOR_DELIVERY' or order.status == 'Out for Delivery' %}
+                Out for Delivery
+                {% elif order.status == 'ASSIGNED' or order.status == 'Assigned' %}
+                Rider Assigned
+                {% else %}
+                Order Placed
+                {% endif %}
+              </span>
+              {% endif %}
+
+              <!-- Return Process Status Tag -->
+              {% if return_req %}
+                {% if return_req.status == 'REJECTED' %}
+                <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase tracking-wider border border-danger text-danger bg-danger-subtle"
+                  style="font-size: 0.75rem;">
+                  ❌ Return Rejected
+                </span>
+                {% else %}
+                <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase tracking-wider border border-pink"
+                  style="font-size: 0.75rem; background-color: #FFF0F3;">
+                  {% if return_req.status == 'REQUESTED' %}⏳ Return Under Review
+                  {% elif return_req.status == 'PICKUP_ASSIGNED' %}📦 Pickup Scheduled
+                  {% elif return_req.status == 'PICKED_UP' %}🚚 Item Picked Up
+                  {% elif return_req.status == 'REFUNDED' %}✅ Refund Credited
+                  {% else %}{{ return_req.get_status_display }}{% endif %}
+                </span>
+                {% endif %}
+              {% endif %}
+            </div>
+            <span class="text-muted small">
+              <i class="fa-regular fa-calendar me-1"></i> Placed on {{ order.created|date:"M d, Y" }}
+            </span>
+          </div>
+
+          <div class="text-md-end">
+            <p class="text-muted mb-1 small text-uppercase tracking-wider fw-bold">Total Amount</p>
+            <h3 class="fw-bold text-dark m-0">₹{{ order.get_total_cost }}</h3>
+          </div>
+        </div>
+
+        <!-- Middle Body: Tracking Stepper & Actions -->
+        <div class="row align-items-center">
+          <div class="col-lg-8 mb-4 mb-lg-0">
+            <div class="pe-lg-4">
+
+              <!-- DYNAMIC ORDER & RETURN TIMELINE -->
+              <div class="order-timeline-container my-3 p-3 bg-white rounded-4 border border-pink">
+                {% if return_req.status == 'REJECTED' %}
+                  <div class="alert alert-danger rounded-3 mb-3 d-flex align-items-center gap-2 small">
+                    <i class="fa-solid fa-circle-xmark text-danger fs-5"></i>
+                    <div>
+                      <strong>Return Rejected:</strong> {% if return_req.admin_remark %}{{ return_req.admin_remark }}{% else %}Seller rejected this return request.{% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                {% if return_req.status == 'REJECTED' %}
+                  <!-- REJECTED RETURN TIMELINE (2 STEPS ONLY) -->
+                  <div class="d-flex justify-content-between position-relative mb-2 px-5">
+                    <div class="progress position-absolute top-50 start-0 translate-middle-y w-100" style="height: 4px; z-index: 1;">
+                      <div class="progress-bar bg-danger" role="progressbar" style="width: 100%;"></div>
+                    </div>
+                    
+                    <!-- Step 1: Delivered -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle bg-success text-white mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-check-lg"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Delivered</small>
+                    </div>
+
+                    <!-- Step 2: Return Rejected -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle bg-danger text-white mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-x-lg"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-danger">Return Rejected</small>
+                    </div>
+                  </div>
+                {% elif return_req or order.status in 'RETURN_REQUESTED,PICKUP_ASSIGNED,PICKED_UP,REFUNDED,Return Requested,Return Approved,Refunded,Picked Up' or order.return_requests.exists %}
+                  <!-- REVERSE LOGISTICS (RETURN) TIMELINE -->
+                  <div class="d-flex justify-content-between position-relative mb-2">
+                    <div class="progress position-absolute top-50 start-0 translate-middle-y w-100" style="height: 4px; z-index: 1;">
+                      <div class="progress-bar bg-pink" role="progressbar" 
+                        style="width: {% if order.status == 'RETURN_REQUESTED' or order.status == 'Return Requested' or order.status == 'Return Approved' or return_req.status == 'REQUESTED' or return_req.status == 'APPROVED' %}25%{% elif order.status == 'PICKUP_ASSIGNED' or return_req.status == 'PICKUP_ASSIGNED' %}50%{% elif order.status == 'PICKED_UP' or order.status == 'Picked Up' or return_req.status == 'PICKED_UP' or return_req.status == 'RECEIVED' %}75%{% elif order.status == 'REFUNDED' or order.status == 'Refunded' or return_req.status == 'REFUNDED' %}100%{% else %}25%{% endif %};">
+                      </div>
+                    </div>
+                    
+                    <!-- Step 1: Delivered -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle bg-success text-white mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-check-lg"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Delivered</small>
+                    </div>
+
+                    <!-- Step 2: Return Requested -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle bg-pink text-white mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Return Req</small>
+                    </div>
+
+                    <!-- Step 3: Pickup Assigned -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle {% if order.status in 'PICKUP_ASSIGNED,PICKED_UP,REFUNDED,Picked Up,Refunded' or return_req.status in 'PICKUP_ASSIGNED,PICKED_UP,RECEIVED,REFUNDED' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-person-badge"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Rider Assigned</small>
+                    </div>
+
+                    <!-- Step 4: Item Picked Up -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle {% if order.status in 'PICKED_UP,REFUNDED,Picked Up,Refunded' or return_req.status in 'PICKED_UP,RECEIVED,REFUNDED' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-truck"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Item Picked Up</small>
+                    </div>
+
+                    <!-- Step 5: Refund Credited -->
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle {% if order.status in 'REFUNDED,Refunded' or return_req.status == 'REFUNDED' %}bg-success text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-wallet2"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Refunded</small>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- STANDARD FORWARD DELIVERY TIMELINE -->
+                  <div class="d-flex justify-content-between position-relative mb-2">
+                    <div class="progress position-absolute top-50 start-0 translate-middle-y w-100" style="height: 4px; z-index: 1;">
+                      <div class="progress-bar bg-pink" role="progressbar" 
+                        {% if order.status == 'PLACED' or order.status == 'Placed' %} style="width: 0%;" 
+                        {% elif order.status == 'ASSIGNED' or order.status == 'Assigned' %} style="width: 33%;" 
+                        {% elif order.status == 'OUT_FOR_DELIVERY' or order.status == 'Out for Delivery' %} style="width: 66%;" 
+                        {% elif order.status == 'DELIVERED' or order.status == 'Delivered' %} style="width: 100%;" 
+                        {% else %} style="width: 0%;" {% endif %}>
+                      </div>
+                    </div>
+
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle bg-pink text-white mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-receipt"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Placed</small>
+                    </div>
+
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle {% if order.status in 'ASSIGNED,OUT_FOR_DELIVERY,DELIVERED,Assigned,Out for Delivery,Delivered' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-box-seam"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Assigned</small>
+                    </div>
+
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle {% if order.status in 'OUT_FOR_DELIVERY,DELIVERED,Out for Delivery,Delivered' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-bicycle"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Out for Delivery</small>
+                    </div>
+
+                    <div class="text-center position-relative" style="z-index: 2;">
+                      <div class="step-circle {% if order.status in 'DELIVERED,Delivered' %}bg-success text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                        <i class="bi bi-check2-circle"></i>
+                      </div>
+                      <small class="d-block mt-1 fw-bold text-dark">Delivered</small>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Right Column: Buttons -->
+          <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 border-start-lg ps-lg-4">
+            <div class="d-flex flex-column gap-2">
+              <a href="{% url 'orders:order_detail' order.id %}"
+                class="btn btn-outline-primary rounded-pill py-2 fw-bold w-100">
+                <i class="fa-solid fa-file-invoice me-2"></i> View Order Details
+              </a>
+
+              {% if order.status in 'DELIVERED,Delivered' or return_req %}
+              <a href="{% url 'orders:invoice_pdf' order.id %}"
+                class="btn btn-primary rounded-pill py-2 fw-bold w-100 shadow-sm">
+                <i class="fa-solid fa-download me-2"></i> Download Invoice
+              </a>
+
+              {% if not return_req and order.status in 'DELIVERED,Delivered' %}
+              <a href="{% url 'orders:request_return' order.id %}"
+                class="btn btn-danger rounded-pill py-2 fw-bold w-100 shadow-sm">
+                <i class="fa-solid fa-rotate-left me-2"></i> Request Return
+              </a>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="text-center py-5 my-5 glass-card rounded-4 border border-pink shadow-sm bg-surface">
+        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+          style="width: 100px; height: 100px; background-color: #FFF0F3;">
+          <i class="fa-solid fa-bag-shopping display-4 text-pink"></i>
+        </div>
+        <h3 class="fw-bold font-heading mb-2 text-dark">No orders found</h3>
+        <p class="text-muted lead mb-4">You haven't placed any orders yet. Let's change that!</p>
+        <a href="{% url 'store:shop' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">Start Shopping</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .bg-pink {
+    background-color: #BE185D !important;
+  }
+
+  .border-pink {
+    border: 1.5px solid #F472B6 !important;
+  }
+
+  @media (min-width: 992px) {
+    .border-start-lg {
+      border-left: 1px solid rgba(244, 114, 182, 0.3);
+    }
+  }
+</style>
+{% endblock %}

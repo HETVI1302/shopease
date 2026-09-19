@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}FAQs & Support - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="fw-bold font-heading mb-4 text-center">Frequently Asked Questions</h1>
+            <div class="accordion mt-4" id="faqAccordion">
+                <div class="accordion-item bg-transparent">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            How do I track my order?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            You can track your order in the "My Orders" section under your account profile.
+                        </div>
+                    </div>
+                </div>
+                <!-- Add more FAQs here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Shop - ShopEase{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="py-5 mb-5 border-bottom page-header shop-header" style="background: linear-gradient(135deg, #BE185D 0%, #831843 100%) !important;">
+    <div class="container text-center py-4">
+        <h1 class="display-5 fw-bold font-heading mb-2" style="color: #ffffff !important;">{% if category %}{{ category.name }}{% else %}All Collection{% endif %}</h1>
+        <p class="lead mb-0" style="color: rgba(255, 255, 255, 0.8) !important;">Discover our curated selection of premium goods.</p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    
+    {% if query %}
+        <div class="glass-card p-4 mb-5 rounded-4 text-center animate-down shadow-sm border-primary border-opacity-25 bg-primary bg-opacity-10">
+            <h4 class="mb-0 fw-bold">
+                <i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i> 
+                AI Search Results for <span class="text-primary">"{{ query }}"</span>
+            </h4>
+        </div>
+    {% endif %}
+
+    <div class="row g-5">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="glass-card p-0 sticky-top overflow-hidden border-0 shadow-sm" style="top: 100px; border-radius: 1.25rem;">
+                <div class="bg-primary text-white p-3 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 font-heading"><i class="fa-solid fa-filter me-2"></i> Filters</h5>
+                    <a href="{% url 'store:shop' %}" class="text-white text-decoration-none small opacity-75 hover-opacity-100">Clear All</a>
+                </div>
+                
+                <form action="{% url 'store:shop' %}" method="GET" id="filterForm" class="p-4 bg-surface">
+                    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                    
+                    <div class="accordion accordion-flush" id="filterAccordion">
+                        <!-- Categories -->
+                        <div class="accordion-item bg-transparent border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button bg-transparent fw-bold text-uppercase tracking-wider small px-0 shadow-none text-body" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory">
+                                    Category
+                                </button>
+                            </h2>
+                            <div id="collapseCategory" class="accordion-collapse collapse show">
+                                <div class="accordion-body px-0 pt-0 pb-3">
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="form-check custom-radio">
+                                            <input class="form-check-input" type="radio" name="category" value="" id="cat_all" {% if not request.GET.category %}checked{% endif %} onchange="this.form.submit();">
+                                            <label class="form-check-label" for="cat_all">All Categories</label>
+                                        </div>
+                                        {% for cat in categories %}
+                                        <div class="form-check custom-radio">
+                                            <input class="form-check-input" type="radio" name="category" value="{{ cat.name }}" id="cat_{{ cat.id }}" {% if request.GET.category == cat.name %}checked{% endif %} onchange="this.form.submit();">
+                                            <label class="form-check-label" for="cat_{{ cat.id }}">{{ cat.name }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="accordion-item bg-transparent border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button bg-transparent fw-bold text-uppercase tracking-wider small px-0 shadow-none text-body" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePrice">
+                                    Price Range
+                                </button>
+                            </h2>
+                            <div id="collapsePrice" class="accordion-collapse collapse show">
+                                <div class="accordion-body px-0 pt-0 pb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-transparent border-end-0 text-muted">₹</span>
+                                            <input type="number" name="min_price" class="form-control border-start-0 ps-0 shadow-none bg-transparent" placeholder="Min" value="{{ request.GET.min_price }}">
+                                        </div>
+                                        <span class="text-muted">-</span>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-transparent border-end-0 text-muted">₹</span>
+                                            <input type="number" name="max_price" class="form-control border-start-0 ps-0 shadow-none bg-transparent" placeholder="Max" value="{{ request.GET.max_price }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Gender (Pills) -->
+                        <div class="accordion-item bg-transparent border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button bg-transparent fw-bold text-uppercase tracking-wider small px-0 shadow-none text-body" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGender">
+                                    Audience
+                                </button>
+                            </h2>
+                            <div id="collapseGender" class="accordion-collapse collapse show">
+                                <div class="accordion-body px-0 pt-0 pb-3">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <input type="radio" class="btn-check" name="target" id="target_any" value="" {% if not request.GET.target %}checked{% endif %}>
+                                        <label class="btn btn-outline-secondary btn-sm rounded-pill" for="target_any">All</label>
+                                        
+                                        <input type="radio" class="btn-check" name="target" id="target_men" value="MEN" {% if request.GET.target == 'MEN' %}checked{% endif %}>
+                                        <label class="btn btn-outline-secondary btn-sm rounded-pill" for="target_men">Men</label>
+                                        
+                                        <input type="radio" class="btn-check" name="target" id="target_women" value="WOMEN" {% if request.GET.target == 'WOMEN' %}checked{% endif %}>
+                                        <label class="btn btn-outline-secondary btn-sm rounded-pill" for="target_women">Women</label>
+                                        
+                                        <input type="radio" class="btn-check" name="target" id="target_kids" value="KIDS" {% if request.GET.target == 'KIDS' %}checked{% endif %}>
+                                        <label class="btn btn-outline-secondary btn-sm rounded-pill" for="target_kids">Kids</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Minimum Rating -->
+                        <div class="accordion-item bg-transparent border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button bg-transparent fw-bold text-uppercase tracking-wider small px-0 shadow-none text-body" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRating">
+                                    Rating
+                                </button>
+                            </h2>
+                            <div id="collapseRating" class="accordion-collapse collapse show">
+                                <div class="accordion-body px-0 pt-0 pb-3">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating_any" value="" {% if not request.GET.rating %}checked{% endif %}>
+                                        <label class="form-check-label text-warning" for="rating_any">Any Rating</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating_4" value="4" {% if request.GET.rating == '4' %}checked{% endif %}>
+                                        <label class="form-check-label text-warning" for="rating_4">
+                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i> & Up
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating_3" value="3" {% if request.GET.rating == '3' %}checked{% endif %}>
+                                        <label class="form-check-label text-warning" for="rating_3">
+                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i> & Up
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stock -->
+                        <div class="accordion-item bg-transparent border-0 mt-3">
+                            <div class="form-check form-switch d-flex align-items-center gap-2 ps-0">
+                                <label class="form-check-label fw-bold text-uppercase tracking-wider small m-0" for="inStockFilter">In Stock Only</label>
+                                <input class="form-check-input m-0 ms-auto shadow-none" type="checkbox" role="switch" name="in_stock" value="on" id="inStockFilter" {% if request.GET.in_stock == 'on' or request.GET.in_stock == 'true' %}checked{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill mt-4 shadow-sm fw-bold py-2">Apply Filters</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <div class="text-muted fw-semibold">{{ products|length }} products found</div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted fw-bold text-uppercase">Sort by:</span>
+                    <select class="form-select form-select-sm border-0 bg-transparent fw-bold shadow-none" name="sort" form="filterForm" style="width: auto; cursor: pointer;" onchange="this.form.submit();">
+                        <option value="" {% if not request.GET.sort %}selected{% endif %}>Recommended</option>
+                        <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Top Rated</option>
+                        <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if products|length == 0 %}
+                <div class="text-center py-5 my-5 glass-card shadow-sm border-0">
+                    <div class="p-5">
+                        <i class="fa-solid fa-box-open display-1 text-muted mb-4 opacity-50"></i>
+                        <h3 class="fw-bold font-heading">No products found</h3>
+                        <p class="text-muted lead">We couldn't find any items matching your filters.</p>
+                        <a href="{% url 'store:shop' %}" class="btn btn-primary rounded-pill px-4 mt-3">Clear All Filters</a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for product in products %}
+                    <div class="col animate-up" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+                        <div class="card glass-card h-100 border-0 product-card">
+                            <!-- Badges -->
+                            <div class="position-absolute top-0 start-0 m-3 z-3 d-flex flex-column gap-2">
+                                {% if product.target %}
+                                    <span class="badge bg-dark rounded-pill px-2 py-1 shadow-sm">{{ product.target }}</span>
+                                {% endif %}
+                                {% if product.stock <= 0 %}
+                                    <span class="badge bg-danger rounded-pill px-2 py-1 shadow-sm">Sold Out</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Wishlist Toggle -->
+                            {% if user.is_authenticated %}
+                            <button class="btn rounded-circle position-absolute top-0 end-0 m-3 shadow-sm wishlist-toggle-btn d-flex align-items-center justify-content-center" data-product-id="{{ product.id }}" style="z-index: 3; width: 36px; height: 36px;">
+                                <i class="fa-heart fs-6 {% if product.id in wishlist_product_ids %}fa-solid text-danger{% else %}fa-regular text-muted{% endif %}"></i>
+                            </button>
+                            {% endif %}
+
+                            <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-body">
+                                <div class="product-img-container">
+                                    {% if product.image %}
+                                        <img src="{{ product.image.url }}" class="product-img {% if product.stock <= 0 %}opacity-50{% endif %}" alt="{{ product.name }}">
+                                    {% else %}
+                                        <div class="product-img bg-light d-flex align-items-center justify-content-center text-muted">
+                                            <i class="fa-solid fa-image display-1 opacity-25"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </a>
+                            
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="d-flex align-items-center gap-1 mb-2">
+                                    <i class="fa-solid fa-star text-warning" style="font-size: 0.8rem;"></i>
+                                    <span class="fw-bold small">{{ product.average_rating|floatformat:1 }}</span>
+                                </div>
+                                <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-body">
+                                    <h6 class="card-title mb-1 fw-bold text-truncate" title="{{ product.name }}">{{ product.name }}</h6>
+                                </a>
+                                <p class="text-muted small mb-3">{{ product.category.name }}</p>
+                                <div class="mt-auto d-flex justify-content-between align-items-center">
+                                    <div class="d-flex flex-column">
+                                        <span class="fs-5 fw-bold text-primary">₹{{ product.price }}</span>
+                                    </div>
+                                    <a href="{{ product.get_absolute_url }}" class="btn btn-sm btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; z-index: 2;" {% if product.stock <= 0 %}style="pointer-events: none; opacity: 0.5;"{% endif %}><i class="fa-solid fa-cart-plus"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-surface {
+        background-color: var(--surface-bg);
+    }
+</style>
+{% endblock %}

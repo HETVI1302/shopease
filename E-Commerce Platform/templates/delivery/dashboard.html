@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Delivery Dashboard - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold font-outfit text-success"><i class="fa-solid fa-motorcycle me-2"></i> Delivery Dashboard</h2>
+        <span class="badge bg-success rounded-pill px-3 py-2">Active Partner</span>
+    </div>
+
+    <!-- Active Deliveries -->
+    <h4 class="fw-bold font-outfit border-bottom pb-2 mb-4" data-i18n="active_deliveries">Active Deliveries</h4>
+    <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+        {% for order in active_deliveries %}
+        <div class="col">
+            <div class="glass-card p-4 rounded-4 h-100 border-start border-success border-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="fw-bold text-muted">Order #{{ order.id }}</span>
+                    {% if order.status == 'Assigned' %}
+                        <span class="badge badge-pending">{{ order.status }}</span>
+                    {% elif order.status == 'Picked Up' %}
+                        <span class="badge badge-pending">{{ order.status }}</span>
+                    {% elif order.status == 'Out for Delivery' %}
+                        <span class="badge badge-active">{{ order.status }}</span>
+                    {% else %}
+                        <span class="badge badge-success">{{ order.status }}</span>
+                    {% endif %}
+                </div>
+                
+                <h5 class="fw-bold mb-1">{{ order.first_name }} {{ order.last_name }}</h5>
+                <p class="text-muted small mb-1"><i class="fa-solid fa-phone me-2"></i> {{ order.shipping_phone|default:"No Phone Number" }}</p>
+                <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-2 text-danger"></i> {{ order.address }}, {{ order.city }} - {{ order.postal_code }}</p>
+                <p class="text-primary small mb-3 fw-bold"><i class="fa-regular fa-clock me-1"></i> Deliver Today by {{ order.scheduled_time|time:"g:i A" }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3">
+                    <div>
+                        {% if order.payment_method == 'COD' %}
+                            <span class="d-block text-muted small text-uppercase fw-bold">Collect Cash:</span>
+                            <span class="fw-bold fs-5 text-success">₹{{ order.get_total_cost }}</span>
+                        {% else %}
+                            <span class="d-block text-muted small text-uppercase fw-bold">Payment Status:</span>
+                            <span class="fw-bold fs-6 text-primary"><i class="fa-solid fa-credit-card me-1"></i> Prepaid via Razorpay</span>
+                        {% endif %}
+                    </div>
+                    <a href="tel:{{ order.shipping_phone }}" class="btn btn-outline-success rounded-circle" title="Call Customer"><i class="fa-solid fa-phone"></i></a>
+                </div>
+
+                <!-- Action Controls -->
+                <form action="{% url 'delivery:update_status' order.id %}" method="POST" class="d-flex gap-2">
+                    {% csrf_token %}
+                    {% if order.status == 'Assigned' %}
+                        <input type="hidden" name="status" value="Picked Up">
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold" data-i18n="accept_order">Accept Order</button>
+                    {% elif order.status == 'Picked Up' %}
+                        <input type="hidden" name="status" value="Out for Delivery">
+                        <button type="submit" class="btn btn-warning w-100 rounded-pill fw-bold text-dark" data-i18n="out_for_delivery">Out for Delivery</button>
+                    {% elif order.status == 'Out for Delivery' %}
+                        <input type="hidden" name="status" value="Delivered">
+                        <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold" data-i18n="confirm_delivered">Confirm Delivered</button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
+            <h5 class="text-muted" data-i18n="no_active_deliveries">No active deliveries right now.</h5>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Return Pickups -->
+    <h4 class="fw-bold font-outfit border-bottom pb-2 mb-4 mt-5">📦 Return Pickups (Reverse Logistics)</h4>
+    <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+        {% for return_req in return_pickups %}
+        <div class="col">
+            <div class="glass-card p-4 rounded-4 h-100 border-start border-warning border-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="fw-bold text-muted">📦 Return Pickup - Order #{{ return_req.order.id }}</span>
+                    {% if return_req.status == 'PICKUP_ASSIGNED' %}
+                        <span class="badge bg-warning text-dark">Pickup Assigned</span>
+                    {% else %}
+                        <span class="badge bg-success">Picked Up</span>
+                    {% endif %}
+                </div>
+                
+                <h5 class="fw-bold mb-1">{{ return_req.user.first_name }} {{ return_req.user.last_name }}</h5>
+                <p class="text-muted small mb-1"><i class="fa-solid fa-phone me-2"></i> {{ return_req.order.shipping_phone|default:"No Phone Number" }}</p>
+                <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-2 text-danger"></i> {{ return_req.order.address }}, {{ return_req.order.city }} - {{ return_req.order.postal_code }}</p>
+                <p class="text-primary small mb-3 fw-bold"><i class="fa-solid fa-rotate-left me-1"></i> Reason: {{ return_req.get_reason_display }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3">
+                    <div>
+                        <span class="d-block text-muted small text-uppercase fw-bold">Collect Item:</span>
+                        <span class="fw-bold fs-6 text-primary">Please verify the item condition</span>
+                    </div>
+                    <a href="tel:{{ return_req.order.shipping_phone }}" class="btn btn-outline-success rounded-circle" title="Call Customer"><i class="fa-solid fa-phone"></i></a>
+                </div>
+
+                <!-- Action Controls -->
+                {% if return_req.status == 'PICKUP_ASSIGNED' %}
+                <form action="{% url 'delivery:confirm_pickup' return_req.id %}" method="POST" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning w-100 rounded-pill fw-bold text-dark">Confirm Item Picked Up</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
+            <h5 class="text-muted">No return pickups right now.</h5>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Completed Deliveries History -->
+    <h4 class="fw-bold font-outfit border-bottom pb-2 mb-4" data-i18n="completed_deliveries">Completed Tasks</h4>
+    <div class="glass-card rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-borderless table-hover mb-0">
+                <thead class="bg-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Task Type & ID</th>
+                        <th>Customer</th>
+                        <th>Location</th>
+                        <th>Amount / Status</th>
+                        <th class="pe-4 text-end">Completed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in completed_deliveries %}
+                    <tr class="border-bottom">
+                        <td class="ps-4 fw-bold text-muted"><span class="badge bg-primary bg-opacity-10 text-primary me-2">Delivery</span> #{{ order.id }}</td>
+                        <td>{{ order.first_name }}</td>
+                        <td><span class="text-truncate d-inline-block" style="max-width: 150px;">{{ order.address }}, {{ order.city }}</span></td>
+                        <td class="fw-bold">₹{{ order.get_total_cost }}</td>
+                        <td class="pe-4 text-end text-success"><i class="fa-solid fa-check-circle me-1"></i> {{ order.updated|date:"M d, H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% for pickup in completed_pickups %}
+                    <tr class="border-bottom">
+                        <td class="ps-4 fw-bold text-muted"><span class="badge bg-warning bg-opacity-10 text-warning me-2">Pickup</span> #{{ pickup.id }}</td>
+                        <td>{{ pickup.user.first_name }}</td>
+                        <td><span class="text-truncate d-inline-block" style="max-width: 150px;">{{ pickup.order.address }}, {{ pickup.order.city }}</span></td>
+                        <td class="fw-bold text-success">Picked Up</td>
+                        <td class="pe-4 text-end text-success"><i class="fa-solid fa-check-circle me-1"></i> {{ pickup.updated_at|date:"M d, H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% if not completed_deliveries and not completed_pickups %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">No completed tasks yet.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Shopping Cart - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 pb-5">
+    <div class="d-flex align-items-baseline mb-4 gap-3">
+        <h2 class="display-6 fw-bold font-heading mb-0">Your Bag</h2>
+        <span class="text-muted fw-bold">{{ cart.items.count }} items</span>
+    </div>
+
+    {% if cart.items.count == 0 %}
+        <div class="text-center py-5 glass-card rounded-4 shadow-sm border-0 mt-4">
+            <div class="p-5">
+                <i class="fa-solid fa-bag-shopping display-1 text-muted mb-4 opacity-50"></i>
+                <h3 class="fw-bold font-heading">Your bag is empty.</h3>
+                <p class="text-muted lead mb-4">Let's find something you'll love.</p>
+                <a href="{% url 'store:shop' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">Shop Trending Items</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="row g-5">
+            <!-- Cart Items -->
+            <div class="col-lg-8 mb-4">
+                <div class="glass-card rounded-4 p-4 p-md-5 border-0 shadow-sm bg-surface">
+                    <div class="d-flex flex-column gap-4">
+                        {% for item in cart.items.all %}
+                        <div class="row align-items-center position-relative {% if not forloop.last %}pb-4 border-bottom{% endif %}">
+                            <div class="col-3 col-md-2">
+                                <div class="bg-white rounded-3 shadow-sm p-2 d-flex align-items-center justify-content-center" style="aspect-ratio: 1/1;">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+                                    {% else %}
+                                        <i class="fa-solid fa-image text-muted fs-3 opacity-25"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-9 col-md-10">
+                                <div class="row h-100 align-items-center">
+                                    <div class="col-12 col-md-5 mb-2 mb-md-0">
+                                        <h5 class="fw-bold font-heading mb-1 text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</h5>
+                                        {% if item.variant %}
+                                            <div class="text-muted small">
+                                                {% if item.variant.size != 'NA' %}Size: {{ item.variant.get_size_display }}{% endif %}
+                                                {% if item.variant.color %}| Color: {{ item.variant.color }}{% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="input-group input-group-sm bg-body-tertiary rounded-pill p-1 shadow-sm mx-md-auto" style="width: 100px;">
+                                            <button class="btn btn-sm text-body rounded-circle cart-qty-btn border-0" style="width: 28px; height: 28px; padding: 0;" data-action="decrease" data-item-id="{{ item.id }}"><i class="fa-solid fa-minus" style="font-size: 0.7rem;"></i></button>
+                                            <input type="text" class="form-control text-center cart-qty-input border-0 bg-transparent fw-bold px-0 shadow-none" value="{{ item.quantity }}" readonly id="item-qty-{{ item.id }}" style="font-size: 0.9rem;">
+                                            <button class="btn btn-sm bg-white shadow-sm text-body rounded-circle cart-qty-btn border-0" style="width: 28px; height: 28px; padding: 0;" data-action="increase" data-item-id="{{ item.id }}"><i class="fa-solid fa-plus" style="font-size: 0.7rem;"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 text-end text-md-center">
+                                        <span class="fw-bold text-primary fs-5" id="item-cost-{{ item.id }}">₹{{ item.get_cost }}</span>
+                                    </div>
+                                    <div class="col-12 col-md-1 text-end position-absolute top-0 end-0 mt-1 mt-md-3 me-2" style="width: auto;">
+                                        <a href="{% url 'orders:cart_remove' item.id %}" class="text-muted hover-danger" title="Remove">
+                                            <i class="fa-solid fa-xmark fs-5"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary & Coupons -->
+            <div class="col-lg-4">
+                <div class="glass-card rounded-4 p-4 sticky-top shadow-lg border-0 bg-surface" style="top: 100px;">
+                    <h4 class="fw-bold font-heading mb-4">Summary</h4>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-bold" id="cart-subtotal">₹{{ cart.get_total_price }}</span>
+                    </div>
+
+                    <div id="discount-container" class="{% if not cart.coupon %}d-none{% endif %}">
+                        <div class="d-flex justify-content-between mb-3 align-items-center">
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2">
+                                <i class="fa-solid fa-tag me-1"></i> <span id="applied-coupon-code">{% if cart.coupon %}{{ cart.coupon.code }}{% endif %}</span>
+                            </span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-success" id="cart-discount">{% if cart.coupon %}-₹{{ cart.get_discount }}{% endif %}</span>
+                                <button type="button" class="btn btn-sm text-danger p-0 px-1 hover-primary" id="remove-coupon-btn" title="Remove Coupon">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Estimated Shipping</span>
+                        <span class="fw-bold text-success">Free</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between border-top pt-3 mt-3 mb-4">
+                        <span class="fw-bold fs-5">Total</span>
+                        <span class="fw-bold fs-4 text-gradient" id="cart-total">₹{{ cart.get_total_price_after_discount }}</span>
+                    </div>
+
+                    <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold py-3 shadow-lg mb-4 d-flex justify-content-center align-items-center gap-2">
+                        Checkout <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <!-- Smart Coupon System -->
+                    <div class="mt-4 border-top pt-4">
+                        <h6 class="fw-bold mb-3 font-heading small text-uppercase tracking-wider">Apply Promo Code</h6>
+                        
+                        <!-- Manual Entry -->
+                        <form id="apply-coupon-form" class="d-flex flex-column gap-2 mb-4">
+                            <div class="input-group">
+                                <input type="text" id="coupon-code-input" name="code" class="form-control glass-input rounded-pill ps-4 bg-body-tertiary border-0 shadow-none" placeholder="Enter code">
+                                <button type="submit" id="apply-coupon-btn" class="btn btn-dark rounded-pill px-4 ms-2 shadow-sm">Apply</button>
+                            </div>
+                            <div id="coupon-message-container" class="small mt-1 d-none rounded px-2 py-1"></div>
+                        </form>
+
+                        <!-- Available List -->
+                        {% if active_coupons %}
+                        <h6 class="fw-bold mb-3 font-heading small text-uppercase tracking-wider">Available Offers</h6>
+                        <div class="d-flex flex-column gap-3">
+                            {% for coupon in active_coupons %}
+                                <div class="border rounded-4 p-3 position-relative overflow-hidden bg-body-tertiary border-0 {% if cart.get_total_price < coupon.min_order_amount %}opacity-50{% endif %}">
+                                    <div class="position-absolute top-0 start-0 w-1 h-100 bg-primary"></div>
+                                    <div class="d-flex justify-content-between align-items-center ms-2">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="fw-bold text-primary">{{ coupon.code }}</span>
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ coupon.discount }}% OFF</span>
+                                            </div>
+                                            <div class="text-muted small">Min. Order: ₹{{ coupon.min_order_amount }}</div>
+                                        </div>
+                                        {% if cart.get_total_price >= coupon.min_order_amount %}
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill apply-available-coupon-btn px-3 fw-bold" data-code="{{ coupon.code }}">Apply</button>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" disabled title="Minimum order amount not met">Apply</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/cart.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const removeCouponBtn = document.getElementById("remove-coupon-btn");
+        if (removeCouponBtn) {
+            removeCouponBtn.addEventListener("click", function() {
+                fetch("{% url 'orders:remove_coupon' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById("cart-subtotal").innerText = "₹" + data.subtotal;
+                        document.getElementById("cart-total").innerText = "₹" + data.total;
+                        document.getElementById("discount-container").classList.add("d-none");
+                        
+                        // Optionally refresh the page to update the available coupons section fully
+                        // window.location.reload(); 
+                    }
+                })
+                .catch(error => console.error("Error removing coupon:", error));
+            });
+        }
+    });
+</script>
+{% endblock %}

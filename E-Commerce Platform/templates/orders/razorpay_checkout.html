@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete Payment - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 pb-5 text-center">
+    <div class="glass-card p-4 p-md-5 rounded-4 mx-auto shadow-sm border border-pink"
+        style="max-width: 480px; background: #fff;">
+        <h3 class="fw-bold font-heading mb-1 text-dark">Scan & Pay</h3>
+        <p class="text-muted small mb-3">Scan the QR code using any UPI App (GPay, PhonePe, Paytm)</p>
+
+        <!-- Amount Display -->
+        <div class="p-3 rounded-3 mb-3" style="background-color: #FFF0F3;">
+            <span class="text-muted small text-uppercase fw-bold d-block">Amount Payable</span>
+            <h2 class="fw-bold text-dark m-0">₹{{ order.get_total_cost }}</h2>
+        </div>
+
+        <!-- QR Code Box -->
+        <div class="my-3 p-3 border rounded-3 d-inline-block bg-white shadow-sm">
+            <!-- Option A: Dynamic UPI QR (Apna UPI ID aur Naam yahan change karein) -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=hetvirana094@oksbi%26pn=Hetvi_Rana={{ order.get_total_cost }}%26cu=INR"
+                alt="ShopEase Payment QR" class="img-fluid rounded-2" style="width: 190px; height: 190px;">
+
+        </div>
+
+        <div class="d-flex justify-content-center gap-2 mb-4 text-muted small">
+            <span><i class="bi bi-shield-check text-success"></i> Secure UPI</span> •
+            <span>Instant Verification</span>
+        </div>
+
+        <!-- Payment Confirmation Form -->
+        <form action="{{ callback_url }}" method="POST" id="paymentForm">
+            {% csrf_token %}
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+            <input type="hidden" name="payment_status" value="PAID">
+
+            <button type="submit" id="payConfirmBtn" class="btn btn-primary rounded-pill py-3 fw-bold w-100 shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i> I Have Paid ₹{{ order.get_total_cost }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .border-pink {
+        border: 1.5px solid #F472B6 !important;
+    }
+
+    .btn-primary {
+        background-color: #BE185D !important;
+        border-color: #BE185D !important;
+    }
+
+    .btn-primary:hover {
+        background-color: #9D174D !important;
+        border-color: #9D174D !important;
+    }
+</style>
+
+<script>
+    document.getElementById('paymentForm')?.addEventListener('submit', function () {
+        const btn = document.getElementById('payConfirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Verifying Payment...';
+    });
+</script>
+{% endblock %}
+
+<!-- File: templates/orders/checkout.html ke aakhri me -->
+
+<script>
+    function handlePaymentSuccess(buttonElement, methodType) {
+        const form = document.getElementById('checkoutForm');
+        if (!form) {
+            alert('Checkout form not found!');
+            return;
+        }
+
+        // Check if required shipping fields are filled
+        if (!form.checkValidity()) {
+            // Close modal if open
+            const modalEl = document.querySelector('.modal.show');
+            if (modalEl) {
+                const bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (bsModal) bsModal.hide();
+            }
+            form.reportValidity();
+            return;
+        }
+
+        // Show processing state
+        const originalText = buttonElement.innerHTML;
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing Payment...';
+
+        // Set payment method
+        const paymentInput = document.getElementById('selectedPaymentMethod');
+        if (paymentInput) paymentInput.value = methodType;
+
+        // Submit form after 1 second simulated processing
+        setTimeout(() => {
+            form.submit();
+        }, 1000);
+    }
+
+    // Attach to Simulate UPI Success
+    document.getElementById('simulateUpiSuccessBtn')?.addEventListener('click', function () {
+        handlePaymentSuccess(this, 'Online (UPI Mock)');
+    });
+
+    // Attach to Pay Now (Test)
+    document.getElementById('payNowCardBtn')?.addEventListener('click', function () {
+        handlePaymentSuccess(this, 'Online (Card Mock)');
+    });
+</script>
+
+{% endblock %}

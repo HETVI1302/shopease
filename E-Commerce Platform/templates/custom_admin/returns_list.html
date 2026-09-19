@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid py-4 mt-5">
+    <div class="row mb-4 align-items-center">
+        <div class="col-12 col-md-6">
+            <h2 class="font-heading fw-bold m-0">Returns & Refunds</h2>
+            <p class="text-muted m-0">Manage customer return requests and issue refunds</p>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2 mb-4">
+            <div class="glass-card p-4 rounded-4 sticky-top shadow-sm border-0 bg-surface" style="top: 100px;">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                        <i class="fa-solid fa-gauge-high text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold font-heading m-0">Admin</h5>
+                </div>
+                
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:dashboard' %}">
+                            <i class="fa-solid fa-chart-line"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:manage_orders' %}">
+                            <i class="fa-solid fa-box"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active rounded-pill bg-primary text-white fw-bold d-flex align-items-center gap-3 shadow-sm py-2 px-3" href="{% url 'custom_admin:returns_list' %}">
+                            <i class="fa-solid fa-rotate-left"></i> Returns
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="/admin-panel/products/">
+                            <i class="fa-solid fa-tags"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="/admin-panel/users/">
+                            <i class="fa-solid fa-users"></i> Users
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9 col-xl-10">
+            <div class="glass-card rounded-4 border-0 shadow-sm bg-surface overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="py-3 px-4 fw-bold text-uppercase text-muted small">Return ID</th>
+                                <th class="py-3 px-4 fw-bold text-uppercase text-muted small">Order & Customer</th>
+                                <th class="py-3 px-4 fw-bold text-uppercase text-muted small">Reason</th>
+                                <th class="py-3 px-4 fw-bold text-uppercase text-muted small">Refund Method</th>
+                                <th class="py-3 px-4 fw-bold text-uppercase text-muted small">Status</th>
+                                <th class="py-3 px-4 fw-bold text-uppercase text-muted small text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for return_req in returns %}
+                            <tr>
+                                <td class="py-3 px-4">#{{ return_req.id }}</td>
+                                <td class="py-3 px-4">
+                                    <div class="fw-bold">Order #{{ return_req.order.id }}</div>
+                                    <div class="small text-muted">{{ return_req.user.first_name }} {{ return_req.user.last_name }}</div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">{{ return_req.get_reason_display }}</span>
+                                    {% if return_req.additional_notes %}
+                                    <div class="small text-muted mt-1" title="{{ return_req.additional_notes }}">{{ return_req.additional_notes|truncatechars:30 }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="fw-bold">{{ return_req.get_refund_method_display }}</div>
+                                    <div class="small text-success">₹{{ return_req.refund_amount }}</div>
+                                    {% if return_req.upi_id %}
+                                    <div class="small text-muted">UPI: {{ return_req.upi_id }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4">
+                                    {% if return_req.status == 'REQUESTED' %}
+                                        <span class="badge bg-warning text-dark">Requested</span>
+                                    {% elif return_req.status == 'PICKUP_ASSIGNED' %}
+                                        <span class="badge bg-info text-dark">🚚 Pickup Assigned to {{ return_req.assigned_rider.username }}</span>
+                                    {% elif return_req.status == 'PICKED_UP' %}
+                                        <span class="badge bg-primary">📦 Item Picked Up by Rider</span>
+                                    {% elif return_req.status == 'APPROVED' %}
+                                        <span class="badge bg-info text-dark">Approved</span>
+                                    {% elif return_req.status == 'REFUNDED' %}
+                                        <span class="badge bg-success">✅ Refund Completed (₹{{ return_req.refund_amount }})</span>
+                                    {% elif return_req.status == 'REJECTED' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ return_req.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4 text-end">
+                                    {% if return_req.status == 'REQUESTED' %}
+                                    <form method="POST" action="{% url 'custom_admin:assign_pickup_rider' return_req.id %}" class="d-inline-flex gap-2 align-items-center">
+                                        {% csrf_token %}
+                                        <select class="form-select form-select-sm rounded-pill" name="rider_id" required style="width: auto;">
+                                            <option value="" disabled selected>Select Rider...</option>
+                                            {% for partner in delivery_partners %}
+                                            <option value="{{ partner.id }}">{{ partner.username }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Assign Pickup</button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold ms-1" data-bs-toggle="modal" data-bs-target="#rejectModal{{ return_req.id }}">Reject</button>
+                                    
+                                    {% elif return_req.status == 'PICKUP_ASSIGNED' %}
+                                    <span class="text-muted small">Awaiting Pickup</span>
+                                    
+                                    {% elif return_req.status == 'PICKED_UP' or return_req.status == 'APPROVED' or return_req.status == 'RECEIVED' %}
+                                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#refundModal{{ return_req.id }}">
+                                        <i class="bi bi-wallet2 me-1"></i> Complete Refund
+                                    </button>
+                                    {% elif return_req.status == 'REFUNDED' %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Refund Done
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <div class="fs-1 mb-3"><i class="fa-solid fa-folder-open opacity-25"></i></div>
+                                    <h5 class="fw-bold">No return requests found</h5>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modals Container (Placed outside table for valid DOM & clean bootstrap backdrop rendering) -->
+            {% for return_req in returns %}
+            <!-- Reject Modal -->
+            <div class="modal fade" id="rejectModal{{ return_req.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ return_req.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title fw-bold" id="rejectModalLabel{{ return_req.id }}">Reject Return #{{ return_req.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="POST" action="{% url 'custom_admin:reject_return' return_req.id %}">
+                            {% csrf_token %}
+                            <div class="modal-body pt-3">
+                                <div class="mb-3">
+                                    <label for="admin_remark{{ return_req.id }}" class="form-label fw-bold">Reason for Rejection (Optional)</label>
+                                    <textarea class="form-control rounded-3" id="admin_remark{{ return_req.id }}" name="admin_remark" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-top-0 pt-0">
+                                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Confirm Rejection</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Refund Modal -->
+            <div class="modal fade" id="refundModal{{ return_req.id }}" tabindex="-1" aria-labelledby="refundModalLabel{{ return_req.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title fw-bold" id="refundModalLabel{{ return_req.id }}">Process Refund #{{ return_req.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="POST" action="{% url 'custom_admin:process_refund' return_req.id %}" onsubmit="var btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-2\' role=\'status\'></span>Processing...';">
+                            {% csrf_token %}
+                            <div class="modal-body pt-3">
+                                <p class="text-muted mb-3">Order #{{ return_req.order.id }} Total: <strong>₹{{ return_req.order.get_total_cost }}</strong></p>
+                                <div class="mb-3">
+                                    <label for="refund_amount{{ return_req.id }}" class="form-label fw-bold">Final Refund Amount (₹)</label>
+                                    <input type="number" step="0.01" class="form-control rounded-3" id="refund_amount{{ return_req.id }}" name="refund_amount" value="{{ return_req.refund_amount|default:return_req.order.get_total_cost }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="refund_method{{ return_req.id }}" class="form-label fw-bold">Refund Method</label>
+                                    <select class="form-select rounded-3" id="refund_method{{ return_req.id }}" name="refund_method">
+                                        <option value="ORIGINAL" {% if return_req.refund_method == 'ORIGINAL' %}selected{% endif %}>Original Payment Method (Razorpay/Online)</option>
+                                        <option value="UPI" {% if return_req.refund_method == 'UPI' %}selected{% endif %}>UPI / Bank Transfer</option>
+                                        <option value="STORE_WALLET" {% if return_req.refund_method == 'STORE_WALLET' %}selected{% endif %}>ShopEase Wallet / Credit</option>
+                                        <option value="CASH" {% if return_req.refund_method == 'CASH' %}selected{% endif %}>Cash Refund (In Store / COD)</option>
+                                    </select>
+                                </div>
+                                {% if return_req.upi_id %}
+                                <p class="small text-muted mb-0"><strong>Customer UPI ID:</strong> <span class="badge bg-primary bg-opacity-10 text-primary">{{ return_req.upi_id }}</span></p>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer border-top-0 pt-0">
+                                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                                    <i class="bi bi-wallet2 me-1"></i> Complete Refund
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

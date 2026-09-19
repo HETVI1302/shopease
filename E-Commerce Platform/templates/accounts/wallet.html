@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}My Wallet - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 pb-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center text-md-start">
+            <h2 class="display-6 fw-bold font-heading mb-1">ShopEase Wallet</h2>
+            <p class="text-muted">Manage your store credits and transactions</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Wallet Balance Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="wallet-balance-card glass-card rounded-4 p-4 text-center text-md-start position-relative overflow-hidden border border-pink shadow-sm">
+                <!-- Decorative circles -->
+                <div class="position-absolute rounded-circle" style="width: 150px; height: 150px; top: -50px; right: -50px; background: rgba(244, 114, 182, 0.15); pointer-events: none;"></div>
+                <div class="position-absolute rounded-circle" style="width: 100px; height: 100px; bottom: -20px; left: -20px; background: rgba(244, 114, 182, 0.15); pointer-events: none;"></div>
+                
+                <div class="position-relative z-1">
+                    <p class="text-uppercase tracking-wider fw-bold mb-1 text-muted" style="font-size: 0.9rem; letter-spacing: 0.5px;">Total Usable Balance</p>
+                    <h1 class="display-4 fw-bold font-heading mb-3 text-dark wallet-balance-amount" style="color: #000000 !important;">₹{{ valid_balance }}</h1>
+                    
+                    <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 rounded-pill px-3 py-2 d-inline-flex border border-pink" style="background-color: #FFF0F3;">
+                        <i class="fa-solid fa-circle-info small text-pink"></i>
+                        <span class="small fw-bold text-dark">Valid for 365 days from issue date</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-card rounded-4 p-4 mt-4 border-0 shadow-sm bg-surface">
+                <h5 class="fw-bold font-heading mb-3">How it works</h5>
+                <ul class="text-muted small ps-3 mb-0 d-flex flex-column gap-2">
+                    <li>Credits from refunds or promos are added to your wallet.</li>
+                    <li>You can apply your balance at checkout for any order.</li>
+                    <li>Credits expire 365 days after they are issued.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Transaction History -->
+        <div class="col-lg-8">
+            <div class="glass-card rounded-4 p-4 border-0 shadow-sm bg-surface h-100">
+                <h4 class="fw-bold font-heading mb-4 pb-3 border-bottom d-flex align-items-center justify-content-between">
+                    Transaction History
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill fw-bold" style="font-size: 0.75rem;">{{ transactions.count }} Records</span>
+                </h4>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="text-muted small text-uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-3 fw-bold border-0 border-bottom">Date</th>
+                                <th class="py-3 px-3 fw-bold border-0 border-bottom">Reason</th>
+                                <th class="py-3 px-3 fw-bold border-0 border-bottom text-end">Amount</th>
+                                <th class="py-3 px-3 fw-bold border-0 border-bottom text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for tx in transactions %}
+                            <tr>
+                                <td class="py-3 px-3">
+                                    <div class="fw-bold text-body">{{ tx.created_at|date:"M d, Y" }}</div>
+                                    <div class="small text-muted">{{ tx.created_at|time:"H:i A" }}</div>
+                                </td>
+                                <td class="py-3 px-3">
+                                    <div class="fw-medium text-body">{{ tx.description }}</div>
+                                    {% if tx.order %}
+                                    <a href="{% url 'orders:order_detail' tx.order.id %}" class="small text-primary text-decoration-none d-inline-flex align-items-center mt-1">
+                                        View Order #{{ tx.order.id }} <i class="fa-solid fa-arrow-right ms-1" style="font-size: 0.6rem;"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3 text-end">
+                                    {% if tx.transaction_type == 'CREDIT' %}
+                                        <span class="fw-bold text-success">+ ₹{{ tx.amount }}</span>
+                                    {% elif tx.transaction_type == 'DEBIT' %}
+                                        <span class="fw-bold text-danger">- ₹{{ tx.amount }}</span>
+                                    {% else %}
+                                        <span class="fw-bold text-muted">- ₹{{ tx.amount }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    {% if tx.transaction_type == 'CREDIT' %}
+                                        {% if tx.is_expired %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1 small">Expired</span>
+                                        {% else %}
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1 small">Active</span>
+                                            <div class="text-muted mt-1" style="font-size: 0.65rem;">Exp: {{ tx.expires_at|date:"M d, Y" }}</div>
+                                        {% endif %}
+                                    {% elif tx.transaction_type == 'DEBIT' %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2 py-1 small">Used</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1 small">Expired</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="bg-body-tertiary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                        <i class="fa-solid fa-wallet fs-2 text-muted opacity-50"></i>
+                                    </div>
+                                    <h5 class="fw-bold font-heading">No transactions yet</h5>
+                                    <p class="text-muted small">Your wallet transaction history will appear here.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

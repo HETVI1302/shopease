@@ -1,0 +1,1 @@
+# shopease_project initialization

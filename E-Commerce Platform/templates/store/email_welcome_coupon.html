@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Inter', Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #BE185D; margin: 0; font-size: 28px; font-weight: 800; }
+        .content { color: #333333; line-height: 1.6; font-size: 16px; }
+        .coupon-box { text-align: center; background-color: #FFF0F3; border: 2px dashed #BE185D; padding: 20px; margin: 30px 0; border-radius: 8px; }
+        .code { font-size: 32px; font-weight: bold; color: #BE185D; letter-spacing: 2px; }
+        .footer { text-align: center; color: #888888; font-size: 14px; margin-top: 40px; border-top: 1px solid #eeeeee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ShopEase</h1>
+        </div>
+        <div class="content">
+            <p>Hi there,</p>
+            <p>Welcome to the ShopEase family! 🎉 We're thrilled to have you with us.</p>
+            <p>As promised, here is your exclusive 10% OFF coupon code to use on your very first order with us:</p>
+            
+            <div class="coupon-box">
+                <div class="code">{{ code }}</div>
+            </div>
+            
+            <p>Simply enter this code at checkout to enjoy your discount. Happy shopping!</p>
+            <br>
+            <p>Best regards,<br><strong>The ShopEase Team</strong></p>
+        </div>
+        <div class="footer">
+            &copy; 2026 ShopEase. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

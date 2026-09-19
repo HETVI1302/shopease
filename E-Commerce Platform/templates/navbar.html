@@ -1,0 +1,141 @@
+
+
+<nav class="navbar navbar-expand-lg sticky-top glass-navbar py-3 shadow-sm" style="z-index: 1040;">
+    <div class="container">
+        <a class="navbar-brand fw-bold font-heading fs-4 d-flex align-items-center gap-2" href="{% url 'store:index' %}">
+            <i class="fa-solid fa-bag-shopping text-primary fs-3"></i> 
+            <span class="text-gradient">ShopEase</span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <!-- Search Bar (AI Powered) -->
+            <form class="d-flex mx-auto search-form position-relative" action="{% url 'store:shop' %}" method="GET" style="max-width: 500px; width: 100%;">
+                <div class="input-group">
+                    <input class="form-control glass-input rounded-pill ps-4 pe-5 border-end-0" type="search" name="q" placeholder="Search for products, categories..." aria-label="Search" value="{{ query|default:'' }}" data-i18n-placeholder="search_placeholder" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                    <button class="btn btn-primary rounded-pill px-4" type="submit" style="border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -20px; z-index: 5;"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </form>
+            
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold" href="{% url 'store:shop' %}" data-i18n="shop_all">Shop All</a>
+                </li>
+                
+                <!-- Category Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-semibold" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="categories">
+                        Categories
+                    </a>
+                    <ul class="dropdown-menu glass-dropdown border-0 shadow-lg rounded-4" aria-labelledby="categoryDropdown">
+                        {% for cat in global_categories %}
+                            <li><a class="dropdown-item py-2" href="{{ cat.get_absolute_url }}">{{ cat.name }}</a></li>
+                        {% empty %}
+                            <li><a class="dropdown-item py-2" href="#">No Categories</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                
+                <!-- Theme Toggle -->
+                <li class="nav-item ms-2">
+                    <button class="btn btn-light rounded-circle theme-toggle-btn shadow-sm d-flex align-items-center justify-content-center" id="themeToggle" type="button" onclick="toggleTheme(event)" data-action="toggle-theme" title="Toggle Theme" style="width: 42px; height: 42px; cursor: pointer; border: 1px solid var(--border-color); background: var(--surface-bg);">
+                        <i class="bi bi-moon-stars-fill text-dark" id="theme-toggle-icon"></i>
+                    </button>
+                </li>
+                
+                <!-- Language Toggle -->
+                <li class="nav-item">
+                    <div class="lang-switch px-2 py-1 rounded-pill" style="border: 1px solid var(--border-color); background: var(--surface-bg);">
+                        <a href="#" class="text-decoration-none lang-btn fw-bold" onclick="setLanguage('en')" style="color: var(--text-primary); font-size: 0.85rem;">EN</a> <span class="text-muted mx-1">|</span> 
+                        <a href="#" class="text-decoration-none lang-btn text-muted" onclick="setLanguage('hi')" style="font-size: 0.85rem;">HI</a>
+                    </div>
+                </li>
+                
+                <!-- Wishlist -->
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a href="{% url 'store:wishlist' %}" class="nav-link position-relative d-flex align-items-center justify-content-center rounded-circle" style="width: 42px; height: 42px;">
+                        <i class="fa-solid fa-heart fs-5 text-danger"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" id="nav-wishlist-count" style="display: {% if wishlist_count > 0 %}inline-block{% else %}none{% endif %}; font-size: 0.7rem; padding: 0.35em 0.5em;">
+                            {{ wishlist_count }}
+                        </span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Cart -->
+                <li class="nav-item">
+                    <a href="{% url 'orders:cart_detail' %}" class="nav-link position-relative d-flex align-items-center justify-content-center rounded-circle" style="width: 42px; height: 42px;">
+                        <i class="fa-solid fa-cart-shopping fs-5" style="color: var(--text-primary);"></i>
+                        {% if cart_items_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.7rem; padding: 0.35em 0.5em;">
+                                {{ cart_items_count }}
+                            </span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+                <!-- Wallet Balance -->
+                {% if user.is_authenticated and user.role != 'DELIVERY_PARTNER' %}
+                <li class="nav-item ms-2 d-none d-lg-flex align-items-center">
+                    <a href="{% url 'accounts:wallet' %}" class="btn btn-sm btn-outline-primary rounded-pill fw-bold px-3 py-1 d-flex align-items-center gap-2">
+                        👛 ₹{{ request.user.wallet.balance|floatformat:2|default:"0.00" }}
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- User / Admin Auth -->
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown ms-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px;">
+                                {% if user.first_name %}{{ user.first_name|make_list|first|upper }}{% else %}{{ user.username|make_list|first|upper }}{% endif %}
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow-lg rounded-4 p-2" aria-labelledby="userDropdown">
+                            <li class="px-3 py-2 border-bottom mb-2">
+                                <div class="fw-bold text-truncate" style="color: var(--text-primary);">
+                                    {% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}
+                                </div>
+                                <div class="small text-muted">
+                                    {% if user.role == 'ADMIN' %} Administrator
+                                    {% elif user.role == 'SELLER' %} Store Seller
+                                    {% elif user.role == 'DELIVERY_PARTNER' %} Delivery Rider
+                                    {% else %} Customer {% endif %}
+                                </div>
+                            </li>
+                            
+                            {% if user.role == 'ADMIN' or user.is_superuser %}
+                                <li><a class="dropdown-item py-2 rounded-2" href="{% url 'custom_admin:dashboard' %}"><i class="fa-solid fa-gauge me-2 text-primary"></i> <span data-i18n="admin_dashboard">Admin Dashboard</span></a></li>
+                            {% elif user.role == 'SELLER' %}
+                                <li><a class="dropdown-item py-2 rounded-2" href="{% url 'custom_admin:dashboard' %}"><i class="fa-solid fa-store me-2 text-primary"></i> <span>Seller Panel</span></a></li>
+                            {% elif user.role == 'DELIVERY_PARTNER' %}
+                                <li><a class="dropdown-item py-2 rounded-2" href="{% url 'delivery:dashboard' %}"><i class="fa-solid fa-motorcycle me-2 text-primary"></i> <span data-i18n="delivery_dashboard">Delivery Dashboard</span></a></li>
+                            {% endif %}
+                            
+                            {% if user.role != 'DELIVERY_PARTNER' %}
+                            <li><a class="dropdown-item py-2 rounded-2" href="{% url 'orders:my_orders' %}"><i class="fa-solid fa-box me-2 text-primary"></i> <span data-i18n="my_orders">My Orders</span></a></li>
+                            <li><a class="dropdown-item py-2 rounded-2" href="{% url 'accounts:wallet' %}"><i class="fa-solid fa-wallet me-2 text-primary"></i> <span data-i18n="my_wallet">My Wallet</span> <span class="badge wallet-badge bg-primary rounded-pill ms-2">₹{{ request.user.wallet.balance|floatformat:2|default:"0.00" }}</span></a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item py-2 rounded-2" href="{% url 'accounts:edit_profile' %}"><i class="fa-solid fa-user-pen me-2 text-primary"></i> <span>Edit Profile</span></a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="{% url 'accounts:logout' %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item py-2 rounded-2 text-danger border-0 bg-transparent" style="width: 100%; text-align: left;"><i class="fa-solid fa-right-from-bracket me-2"></i> <span data-i18n="logout">Logout</span></button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item d-flex gap-2 ms-3">
+                        <a class="nav-link btn btn-outline-primary rounded-pill px-4 fw-bold" href="{% url 'accounts:login' %}" data-i18n="login">Login</a>
+                        <a class="nav-link btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="color: white !important;" href="{% url 'accounts:register' %}" data-i18n="register">Register</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

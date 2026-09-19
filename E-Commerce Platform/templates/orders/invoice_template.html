@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invoice #{{ order.id }}</title>
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { font-size: 24px; font-weight: bold; color: #4F46E5; margin-bottom: 5px; }
+        .invoice-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+        .info-table { width: 100%; margin-bottom: 30px; }
+        .info-table td { width: 50%; vertical-align: top; }
+        .section-title { font-weight: bold; font-size: 14px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .items-table th { background-color: #f8f9fa; border-bottom: 2px solid #ddd; padding: 10px; text-align: left; font-weight: bold; }
+        .items-table td { border-bottom: 1px solid #ddd; padding: 10px; }
+        .text-right { text-align: right; }
+        .total-section { width: 40%; margin-left: 60%; }
+        .total-table { width: 100%; border-collapse: collapse; }
+        .total-table td { padding: 5px 10px; }
+        .total-row { font-weight: bold; font-size: 14px; border-top: 2px solid #333; }
+        .footer { text-align: center; margin-top: 50px; font-size: 10px; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">ShopEase</div>
+        <div>123 Commerce Street, Tech City, 10001</div>
+        <div>Email: support@shopease.com | Phone: +1 234 567 890</div>
+    </div>
+
+    <div class="invoice-title">TAX INVOICE</div>
+
+    <table class="info-table">
+        <tr>
+            <td>
+                <div class="section-title">Billed To:</div>
+                <div><strong>{{ order.first_name }} {{ order.last_name }}</strong></div>
+                <div>{{ order.address }}</div>
+                <div>{{ order.city }} - {{ order.postal_code }}</div>
+                <div>{{ order.email }}</div>
+            </td>
+            <td>
+                <div class="section-title">Order Details:</div>
+                <div><strong>Order ID:</strong> #{{ order.id }}</div>
+                <div><strong>Date:</strong> {{ order.created|date:"M d, Y" }}</div>
+                <div><strong>Payment Method:</strong> {{ order.payment_method }}</div>
+                <div><strong>Status:</strong> {{ order.paid|yesno:"Paid,Pending" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Item Description</th>
+                <th style="width: 15%; text-align: center;">Qty</th>
+                <th style="width: 20%; text-align: right;">Unit Price</th>
+                <th style="width: 20%; text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td>
+                    {{ item.product.name }}
+                    {% if item.variant %}
+                        <br><span style="font-size: 10px; color: #666;">
+                        {% if item.variant.size != 'NA' %}Size: {{ item.variant.get_size_display }}{% endif %}
+                        {% if item.variant.color %} Color: {{ item.variant.color }}{% endif %}
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td class="text-right">Rs. {{ item.price }}</td>
+                <td class="text-right">Rs. {{ item.get_cost }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <table class="total-table">
+            <tr>
+                <td>Subtotal:</td>
+                <td class="text-right">Rs. {{ order.get_total_cost|add:order.discount_amount }}</td>
+            </tr>
+            {% if order.discount_amount > 0 %}
+            <tr>
+                <td>Discount ({% if order.coupon %}{{ order.coupon.code }}{% endif %}):</td>
+                <td class="text-right" style="color: green;">- Rs. {{ order.discount_amount }}</td>
+            </tr>
+            {% endif %}
+            <!-- Assuming prices include GST for simplicity, or we could calculate it here -->
+            <tr class="total-row">
+                <td>Total Amount:</td>
+                <td class="text-right">Rs. {{ order.get_total_cost }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        Thank you for shopping with ShopEase! This is a computer generated invoice and does not require a physical signature.
+    </div>
+</body>
+</html>

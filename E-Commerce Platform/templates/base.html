@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ShopEase - Modern E-Commerce{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Dancing+Script:wght@600;700&family=Pacifico&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome & Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS with Cache Buster -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=9.0">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=9.0">
+    
+    <!-- Prevent Theme Flash & Early Toggle Handler -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('shopease-theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            window.toggleTheme = function(e) {
+                if (e && e.preventDefault) e.preventDefault();
+                const cur = document.documentElement.getAttribute('data-bs-theme') || 'light';
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-bs-theme', next);
+                if (document.body) document.body.setAttribute('data-bs-theme', next);
+                localStorage.setItem('shopease-theme', next);
+                if (window.updateIcons) {
+                    window.updateIcons(next);
+                } else {
+                    const icon = document.getElementById('theme-toggle-icon');
+                    if (icon) icon.className = next === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill text-dark';
+                }
+            };
+        })();
+    </script>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    {% include 'navbar.html' %}
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show glass-alert" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    {% include 'footer.html' %}
+
+    <!-- AI Chat Widget -->
+    {% include 'ai_chat_widget.html' %}
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Toggle (Loaded First for Instant Responsiveness) -->
+    <script src="{% static 'js/theme-toggle.js' %}?v=9.0"></script>
+
+    <!-- Custom JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/ai_chat.js' %}"></script>
+    <script src="{% static 'js/language.js' %}"></script>
+    <script src="{% static 'js/wishlist.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

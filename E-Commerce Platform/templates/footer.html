@@ -1,0 +1,165 @@
+<footer class="mt-auto position-relative border-top-0 pt-5 pb-4 overflow-hidden">
+    <div class="container position-relative z-1">
+        <div class="row g-5 mb-5 pt-3">
+            <!-- Column 1: Brand -->
+            <div class="col-lg-4 col-md-6 pe-lg-5">
+                <a href="{% url 'store:index' %}" class="d-inline-flex align-items-center mb-4 text-decoration-none text-body gap-3 hover-lift transition-all">
+                    <div class="logo-box brand-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                        <i class="fa-solid fa-cart-shopping fs-5"></i>
+                    </div>
+                    <span class="fs-3 fw-bold font-heading text-gradient m-0">ShopEase</span>
+                </a>
+                <p class="text-muted mb-4 pe-lg-4" style="line-height: 1.8; font-size: 0.95rem;">
+                    Your premium destination for modern, high-quality, and everyday essentials. We deliver the best retail experience directly to your door with uncompromised quality and service.
+                </p>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="https://facebook.com" target="_blank" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all shadow-sm border-opacity-50" style="width: 42px; height: 42px;"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://twitter.com" target="_blank" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all shadow-sm border-opacity-50" style="width: 42px; height: 42px;"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="https://instagram.com" target="_blank" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all shadow-sm border-opacity-50" style="width: 42px; height: 42px;"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://youtube.com" target="_blank" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all shadow-sm border-opacity-50" style="width: 42px; height: 42px;"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <!-- Column 2: Quick Links -->
+            <div class="col-lg-2 col-md-6">
+                <h6 class="fw-bold mb-4 font-heading text-uppercase tracking-wider small">Explore</h6>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                    <li><a href="{% url 'store:index' %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> Home</a></li>
+                    <li><a href="{% url 'store:shop' %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> Shop Catalog</a></li>
+                    <li><a href="{% url 'store:about' %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> About Us</a></li>
+                    <li><a href="{% url 'store:contact' %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Column 3: Customer Service -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="fw-bold mb-4 font-heading text-uppercase tracking-wider small">Customer Service</h6>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                    <li><a href="{% if request.user.is_authenticated %}{% url 'orders:my_orders' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> My Account</a></li>
+                    <li><a href="{% if request.user.is_authenticated %}{% url 'orders:my_orders' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> Order Tracking</a></li>
+                    <li><a href="{% url 'store:returns_policy' %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> Returns & Refunds</a></li>
+                    <li><a href="{% url 'store:faq' %}" class="text-decoration-none text-muted footer-link d-inline-flex align-items-center gap-2"><i class="fa-solid fa-chevron-right text-primary opacity-50" style="font-size: 0.7rem;"></i> FAQs & Support</a></li>
+                </ul>
+            </div>
+
+            <!-- Column 4: Newsletter -->
+            <div class="col-lg-3 col-md-6">
+                <div class="glass-card p-4 rounded-4 shadow-sm border-0 bg-body-tertiary h-100">
+                    <h6 class="fw-bold mb-3 font-heading text-uppercase tracking-wider small text-primary"><i class="fa-regular fa-envelope me-2"></i> Newsletter</h6>
+                    <p class="text-muted small mb-4">Subscribe to our newsletter and get <strong class="text-body">10% off</strong> your first purchase.</p>
+                    <form id="newsletterForm" class="d-flex align-items-center position-relative mt-3">
+                        {% csrf_token %}
+                        <input type="email" name="email" id="newsletterEmail" class="form-control bg-dark text-white border-secondary pe-5" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary position-absolute end-0 me-1 px-3 py-1">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                    <div id="newsletterMessage" class="small mt-2" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4 border-top border-secondary border-opacity-10 mt-4 pb-2">
+            <p class="text-muted small mb-4 mb-md-0 d-flex align-items-center gap-2">
+                <span>&copy; 2026 ShopEase.</span>
+                <span class="d-none d-sm-inline opacity-25">|</span>
+                <span class="d-inline-flex align-items-center gap-1"><i class="fa-solid fa-bolt text-warning" style="font-size: 0.8rem;"></i> Powered by Gemini AI.</span>
+            </p>
+            <div class="d-flex gap-2 gap-sm-3 align-items-center text-muted fs-5 flex-wrap justify-content-center">
+                <div class="bg-body-tertiary rounded p-2 d-flex align-items-center justify-content-center border hover-lift transition-all" style="width: 48px; height: 32px;">
+                    <i class="fa-brands fa-cc-visa text-body"></i>
+                </div>
+                <div class="bg-body-tertiary rounded p-2 d-flex align-items-center justify-content-center border hover-lift transition-all" style="width: 48px; height: 32px;">
+                    <i class="fa-brands fa-cc-mastercard text-body"></i>
+                </div>
+                <div class="bg-body-tertiary rounded p-2 d-flex align-items-center justify-content-center border hover-lift transition-all" style="width: 48px; height: 32px;">
+                    <i class="fa-brands fa-cc-paypal text-body"></i>
+                </div>
+                <div class="bg-body-tertiary rounded px-2 d-flex align-items-center justify-content-center border fw-bold text-body small hover-lift transition-all" style="height: 32px; font-size: 0.7rem;">
+                    UPI
+                </div>
+                <div class="bg-body-tertiary rounded px-2 d-flex align-items-center justify-content-center border fw-bold text-body small hover-lift transition-all" style="height: 32px; font-size: 0.7rem;">
+                    COD
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .footer-link {
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .footer-link i {
+        transition: transform 0.2s ease;
+    }
+    .footer-link:hover {
+        color: var(--bs-primary) !important;
+        transform: translateX(4px);
+    }
+    .footer-link:hover i {
+        transform: translateX(2px);
+        opacity: 1 !important;
+    }
+    .hover-bg-primary:hover {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+    .hover-text-white:hover {
+        color: white !important;
+    }
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const newsForm = document.getElementById('newsletterForm');
+    if (newsForm) {
+        newsForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('newsletterEmail');
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const email = emailInput.value.trim();
+            if (!email) return;
+
+            submitBtn.disabled = true;
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+            fetch('/api/newsletter/subscribe/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+                if (data.success) {
+                    alert('🎉 ' + data.message);
+                    emailInput.value = '';
+                } else {
+                    alert(data.message || 'Error subscribing.');
+                }
+            })
+            .catch(err => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+                alert('Something went wrong. Please try again.');
+            });
+        });
+    }
+});
+</script>

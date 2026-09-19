@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Dispatch - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5 pt-5 px-md-5 pb-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="display-6 fw-bold font-heading mb-1">Orders & Dispatch</h2>
+            <p class="text-muted">Manage all incoming orders and assign delivery partners</p>
+        </div>
+    </div>
+    
+    <div class="row g-5">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2 mb-4">
+            <div class="glass-card p-4 rounded-4 sticky-top shadow-sm border-0 bg-surface" style="top: 100px;">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                        <i class="fa-solid fa-gauge-high text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold font-heading m-0">Admin</h5>
+                </div>
+                
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:dashboard' %}">
+                            <i class="fa-solid fa-chart-line"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active rounded-pill bg-primary text-white fw-bold d-flex align-items-center gap-3 shadow-sm py-2 px-3" href="{% url 'custom_admin:manage_orders' %}">
+                            <i class="fa-solid fa-box"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="{% url 'custom_admin:returns_list' %}">
+                            <i class="fa-solid fa-rotate-left"></i> Returns
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="/admin-panel/products/">
+                            <i class="fa-solid fa-tags"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link rounded-pill text-muted fw-bold d-flex align-items-center gap-3 py-2 px-3 hover-primary transition-all" href="/admin-panel/users/">
+                            <i class="fa-solid fa-users"></i> Users
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9 col-xl-10">
+            <div class="glass-card rounded-4 p-4 p-md-5 shadow-sm border-0 bg-surface h-100">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+                    <h4 class="fw-bold font-heading m-0 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-list-check text-primary"></i> Order Management
+                    </h4>
+                    
+                    <form method="GET" action="{% url 'custom_admin:manage_orders' %}" class="d-flex gap-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-body-tertiary border-0 rounded-start-pill ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                            <input type="text" name="search" class="form-control bg-body-tertiary border-0 rounded-end-pill shadow-none" placeholder="Search orders..." value="{{ request.GET.search|default:'' }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary rounded-pill px-3">Search</button>
+                    </form>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead>
+                            <tr class="text-muted small text-uppercase tracking-wider border-bottom border-secondary border-opacity-25">
+                                <th class="pb-3 fw-bold ps-3">Order ID</th>
+                                <th class="pb-3 fw-bold">Customer & Location</th>
+                                <th class="pb-3 fw-bold">Status</th>
+                                <th class="pb-3 fw-bold">Payment</th>
+                                <th class="pb-3 fw-bold text-end pe-3">Delivery / Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr class="border-bottom border-secondary border-opacity-10 hover-bg-light transition-all">
+                                <td class="py-3 ps-3">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-body">#{{ order.id }}</span>
+                                        <span class="text-muted small"><i class="fa-regular fa-clock me-1"></i> {{ order.created|date:"M d, H:i" }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm d-none d-md-flex" style="width: 36px; height: 36px;">
+                                            {{ order.first_name|make_list|first|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ order.first_name }} {{ order.last_name }}</div>
+                                            <div class="small text-muted"><i class="fa-solid fa-location-dot me-1 text-primary opacity-75"></i> {{ order.city }}, {{ order.postal_code }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    {% if order.status == 'Delivered' %}
+                                        <span class="badge border border-success border-opacity-25 rounded-pill px-3 py-1 text-uppercase tracking-wider" style="font-size: 0.7rem; background-color: rgba(var(--bs-success-rgb), 0.1); color: var(--bs-success) !important;"><i class="fa-solid fa-check me-1"></i> {{ order.status }}</span>
+                                    {% elif order.status == 'Placed' %}
+                                        <span class="badge border border-warning border-opacity-25 rounded-pill px-3 py-1 text-uppercase tracking-wider" style="font-size: 0.7rem; background-color: rgba(var(--bs-warning-rgb), 0.1); color: var(--bs-warning) !important;"><i class="fa-regular fa-clock me-1"></i> {{ order.status }}</span>
+                                    {% elif 'Return' in order.status %}
+                                        <span class="badge border border-danger border-opacity-25 rounded-pill px-3 py-1 text-uppercase tracking-wider" style="font-size: 0.7rem; background-color: rgba(var(--bs-danger-rgb), 0.1); color: var(--bs-danger) !important;"><i class="fa-solid fa-rotate-left me-1"></i> {{ order.status }}</span>
+                                    {% else %}
+                                        <span class="badge border border-primary border-opacity-25 rounded-pill px-3 py-1 text-uppercase tracking-wider" style="font-size: 0.7rem; background-color: rgba(var(--bs-primary-rgb), 0.1); color: var(--bs-primary) !important;"><i class="fa-solid fa-truck-fast me-1"></i> {{ order.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <div class="fw-bold text-gradient">₹{{ order.get_total_cost }}</div>
+                                    <div class="small d-flex align-items-center gap-1 mt-1">
+                                        {% if order.paid %}
+                                            <i class="fa-solid fa-circle-check text-success" style="font-size: 0.7rem;"></i> <span class="text-success fw-bold">Paid</span>
+                                        {% else %}
+                                            <i class="fa-solid fa-circle-xmark text-danger" style="font-size: 0.7rem;"></i> <span class="text-danger fw-bold">Unpaid</span>
+                                        {% endif %}
+                                        <span class="text-muted ms-1">({{ order.payment_method }})</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 text-end pe-3">
+                                    {% if order.status == 'Return Requested' or order.status == 'Return Approved' %}
+                                        <div class="d-inline-flex align-items-center gap-2">
+                                            <span class="badge bg-warning text-dark me-2">{{ order.status }}</span>
+                                            <a href="{% url 'custom_admin:returns_list' %}" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold hover-lift">View in Returns &rarr;</a>
+                                        </div>
+                                    {% elif order.delivery_partner %}
+                                        <div class="d-inline-flex align-items-center gap-2 bg-body-tertiary px-3 py-2 rounded-pill border">
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 24px; height: 24px;">
+                                                <i class="fa-solid fa-motorcycle" style="font-size: 0.7rem;"></i>
+                                            </div>
+                                            <span class="fw-bold text-body small">{{ order.delivery_partner.first_name }}</span>
+                                        </div>
+                                    {% elif order.status == 'Placed' %}
+                                        <!-- Dispatch Form -->
+                                        <form action="{% url 'custom_admin:assign_delivery' order.id %}" method="POST" class="d-flex justify-content-end gap-2">
+                                            {% csrf_token %}
+                                            <select name="partner_id" class="form-select form-select-sm bg-body-tertiary border-0 rounded-pill shadow-none" style="max-width: 150px; font-size: 0.8rem;" required>
+                                                <option value="" disabled selected>Assign Rider...</option>
+                                                {% for partner in delivery_partners %}
+                                                    <option value="{{ partner.id }}">{{ partner.first_name }} ({{ partner.vehicle_number }})</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold hover-lift">Assign</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted opacity-50">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="text-muted d-flex flex-column align-items-center gap-2">
+                                        <i class="fa-solid fa-inbox fs-1 opacity-50 mb-2"></i>
+                                        <span>No orders found.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .hover-bg-light:hover {
+        background-color: rgba(var(--bs-secondary-bg-rgb), 0.5);
+    }
+</style>
+{% endblock %}

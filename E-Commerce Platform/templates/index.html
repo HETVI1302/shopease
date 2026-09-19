@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section d-flex align-items-center position-relative overflow-hidden" style="min-height: 85vh; padding-top: 100px; background: linear-gradient(135deg, #BE185D 0%, #831843 100%) !important;">
+    <div class="container position-relative z-2">
+        <div class="row align-items-center">
+            <div class="col-lg-6 text-center text-lg-start animate-up">
+                <span class="badge bg-primary bg-opacity-10 text-primary mb-3 px-3 py-2 rounded-pill fw-bold border border-primary border-opacity-25">✨ The Future of Retail is Here</span>
+                <h1 class="display-3 fw-bold font-heading mb-4 text-white" style="line-height: 1.1;">Experience<br>Intelligent Shopping</h1>
+                <p class="lead mb-5 text-white-50" style="max-width: 500px; margin: 0 auto 0 0;">Discover a curated collection of premium products, powered by AI to match your unique style and needs.</p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+                    <a href="{% url 'store:shop' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-lg d-flex align-items-center justify-content-center gap-2">Shop Trending <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="#categories" class="btn btn-outline-light btn-lg rounded-pill px-5 d-flex align-items-center justify-content-center bg-white bg-opacity-10">Explore Categories</a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block animate-up" style="animation-delay: 0.2s;">
+                <!-- Abstract Hero Graphic using shapes -->
+                <div class="position-relative w-100" style="height: 500px;">
+                    <div class="glass-card position-absolute rounded-4 shadow-lg p-3" style="width: 250px; top: 10%; left: 10%; z-index: 3; transform: rotate(-5deg); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+                        {% if featured_products.0 and featured_products.0.image %}
+                        <img src="{{ featured_products.0.image.url }}" class="img-fluid rounded-3 mb-2" style="height: 150px; object-fit: cover; width: 100%;">
+                        <div class="h6 fw-bold mb-1 text-white text-truncate">{{ featured_products.0.name }}</div>
+                        <div class="text-primary fw-bold text-shadow">₹{{ featured_products.0.price }}</div>
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80" class="img-fluid rounded-3 mb-2" style="height: 150px; object-fit: cover; width: 100%;">
+                        <div class="h6 fw-bold mb-1 text-white">Premium Wireless Headphones</div>
+                        <div class="text-primary fw-bold text-shadow">₹4,999</div>
+                        {% endif %}
+                    </div>
+                    <div class="glass-card position-absolute rounded-4 shadow-lg p-3" style="width: 280px; bottom: 10%; right: 10%; z-index: 4; transform: rotate(3deg); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+                        {% if featured_products.1 and featured_products.1.image %}
+                        <img src="{{ featured_products.1.image.url }}" class="img-fluid rounded-3 mb-2" style="height: 180px; object-fit: cover; width: 100%;">
+                        <div class="h6 fw-bold mb-1 text-white text-truncate">{{ featured_products.1.name }}</div>
+                        <div class="text-primary fw-bold text-shadow">₹{{ featured_products.1.price }}</div>
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=300&q=80" class="img-fluid rounded-3 mb-2" style="height: 180px; object-fit: cover; width: 100%;">
+                        <div class="h6 fw-bold mb-1 text-white">Minimalist Smart Watch</div>
+                        <div class="text-primary fw-bold text-shadow">₹2,499</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust Badges Strip -->
+<div class="py-4 border-top border-bottom trust-badges features-bar" style="background-color: var(--surface-bg);">
+    <div class="container">
+        <div class="row row-cols-2 row-cols-md-4 g-4 text-center">
+            <div class="col d-flex align-items-center justify-content-center gap-3">
+                <i class="fa-solid fa-truck-fast fs-3 text-primary"></i>
+                <div class="text-start">
+                    <div class="fw-bold fs-6 font-heading">Fast Delivery</div>
+                    <div class="small text-muted">24-48hrs Dispatch</div>
+                </div>
+            </div>
+            <div class="col d-flex align-items-center justify-content-center gap-3">
+                <i class="fa-solid fa-rotate-left fs-3 text-primary"></i>
+                <div class="text-start">
+                    <div class="fw-bold fs-6 font-heading">Easy Returns</div>
+                    <div class="small text-muted">7 Days Return Policy</div>
+                </div>
+            </div>
+            <div class="col d-flex align-items-center justify-content-center gap-3">
+                <i class="fa-solid fa-shield-halved fs-3 text-primary"></i>
+                <div class="text-start">
+                    <div class="fw-bold fs-6 font-heading">Secure Checkout</div>
+                    <div class="small text-muted">100% Safe Payments</div>
+                </div>
+            </div>
+            <div class="col d-flex align-items-center justify-content-center gap-3">
+                <i class="fa-solid fa-robot fs-3 text-primary"></i>
+                <div class="text-start">
+                    <div class="fw-bold fs-6 font-heading">Smart Shopping</div>
+                    <div class="small text-muted">Powered by Gemini AI</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories -->
+<section id="categories" class="container mt-5 pt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <span class="text-primary fw-bold text-uppercase tracking-wider small">Collections</span>
+            <h2 class="fw-bold m-0 font-heading display-6">Shop by Category</h2>
+        </div>
+    </div>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-4 text-center justify-content-center">
+        {% for cat in categories %}
+        <div class="col">
+            <a href="{{ cat.get_absolute_url }}" class="text-decoration-none group">
+                <div class="d-flex flex-column align-items-center gap-3 category-card">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm glass-card" style="width: 120px; height: 120px; background: var(--surface-bg); transition: all 0.3s;">
+                        <i class="fa-solid fa-tags display-5 text-primary"></i>
+                    </div>
+                    <h6 class="text-body fw-bold mb-0">{{ cat.name }}</h6>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Trending Products -->
+<section class="container mb-5 py-5">
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <span class="text-primary fw-bold text-uppercase tracking-wider small">Curated For You</span>
+            <h2 class="fw-bold m-0 font-heading display-6">Trending Products</h2>
+        </div>
+        <a href="{% url 'store:shop' %}" class="btn btn-outline-secondary rounded-pill px-4 d-none d-md-flex align-items-center gap-2">View All <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+        {% for product in featured_products %}
+        <div class="col">
+            <div class="card glass-card h-100 border-0 product-card">
+                <!-- Badges -->
+                <div class="position-absolute top-0 start-0 m-3 z-3 d-flex flex-column gap-2">
+                    <span class="badge badge-discount rounded-pill px-2 py-1 shadow-sm">Trending</span>
+                </div>
+                
+                <!-- Wishlist Toggle -->
+                {% if user.is_authenticated %}
+                <button class="btn rounded-circle position-absolute top-0 end-0 m-3 shadow-sm wishlist-toggle-btn d-flex align-items-center justify-content-center" data-product-id="{{ product.id }}" style="z-index: 3; width: 36px; height: 36px;">
+                    <i class="fa-heart fs-6 {% if product.id in wishlist_product_ids %}fa-solid text-danger{% else %}fa-regular text-muted{% endif %}"></i>
+                </button>
+                {% endif %}
+
+                <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-body">
+                    <div class="product-img-container">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="product-img" alt="{{ product.name }}">
+                        {% else %}
+                            <div class="product-img bg-light d-flex align-items-center justify-content-center text-muted">
+                                <i class="fa-solid fa-image display-1 opacity-25"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                </a>
+                
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="d-flex align-items-center gap-1 mb-2">
+                        <i class="fa-solid fa-star text-warning" style="font-size: 0.8rem;"></i>
+                        <span class="fw-bold small">4.8</span>
+                        <span class="text-muted small">(124)</span>
+                    </div>
+                    <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-body">
+                        <h5 class="card-title mb-1 fw-bold text-truncate" title="{{ product.name }}">{{ product.name }}</h5>
+                    </a>
+                    <p class="text-muted small mb-3">{{ product.category.name }}</p>
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <div class="d-flex flex-column">
+                            <span class="fs-5 fw-bold text-primary">₹{{ product.price }}</span>
+                        </div>
+                        <a href="{{ product.get_absolute_url }}" class="btn btn-sm btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; z-index: 2;"><i class="fa-solid fa-cart-plus"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-4 d-md-none">
+        <a href="{% url 'store:shop' %}" class="btn btn-outline-secondary rounded-pill px-4 w-100">View All Products</a>
+    </div>
+</section>
+{% endblock %}
+

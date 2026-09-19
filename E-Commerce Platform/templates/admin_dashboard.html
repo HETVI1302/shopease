@@ -1,0 +1,62 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block after_field_sets %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const titleField = document.getElementById('id_name');
+        const descField = document.getElementById('id_description');
+        const tagsField = document.getElementById('id_ai_tags');
+        
+        if (titleField && descField) {
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'submit-row';
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'button';
+            btn.innerText = '✨ AI Auto-Write Description';
+            btn.style.backgroundColor = '#4F46E5';
+            btn.style.color = 'white';
+            
+            btnContainer.appendChild(btn);
+            descField.parentNode.insertBefore(btnContainer, descField);
+            
+            btn.addEventListener('click', function() {
+                const title = titleField.value;
+                const tags = tagsField ? tagsField.value : '';
+                
+                if (!title) {
+                    alert('Please enter a product name first.');
+                    return;
+                }
+                
+                btn.innerText = 'Generating...';
+                btn.disabled = true;
+                
+                fetch('/api/admin-generate-desc/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({title: title, tags: tags})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.description) {
+                        descField.value = data.description;
+                    } else if (data.error) {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .finally(() => {
+                    btn.innerText = '✨ AI Auto-Write Description';
+                    btn.disabled = false;
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

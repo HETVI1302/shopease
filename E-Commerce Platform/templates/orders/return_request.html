@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="font-heading fw-bold mb-4">Request Return for Order #{{ order.id }}</h2>
+                    
+                    {% if not is_eligible %}
+                    <div class="alert alert-danger rounded-3 border-0">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> This order is not eligible for a return. Items can only be returned within 7 days of delivery.
+                    </div>
+                    <a href="{% url 'orders:my_orders' %}" class="btn btn-primary rounded-pill px-4">Back to My Orders</a>
+                    {% else %}
+                    
+                    <div class="alert alert-info rounded-3 border-0 mb-4">
+                        <i class="fa-solid fa-circle-info me-2"></i> You can request a return for this order. Please provide the details below.
+                    </div>
+
+                    <form method="POST" action="{% url 'orders:request_return' order.id %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="reason" class="form-label fw-bold">Reason for Return <span class="text-danger">*</span></label>
+                            <select class="form-select rounded-3 p-3" id="reason" name="reason" required>
+                                <option value="" disabled selected>Select a reason...</option>
+                                <option value="DEFECTIVE">Defective or Damaged Item</option>
+                                <option value="WRONG_ITEM">Wrong Item Delivered</option>
+                                <option value="SIZE_FIT">Size/Fit Issue</option>
+                                <option value="QUALITY">Quality Not as Expected</option>
+                                <option value="OTHER">Other Reason</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="refund_method" class="form-label fw-bold">Refund Method <span class="text-danger">*</span></label>
+                            <select class="form-select rounded-3 p-3" id="refund_method" name="refund_method" required onchange="toggleUPIField()">
+                                <option value="ORIGINAL" selected>Original Payment Method (Razorpay)</option>
+                                <option value="UPI">UPI / Bank Transfer</option>
+                                <option value="STORE_WALLET">ShopEase Wallet / Credit</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4" id="upi_field_container" style="display: none;">
+                            <label for="upi_id" class="form-label fw-bold">UPI ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3 p-3" id="upi_id" name="upi_id" placeholder="e.g. john@upi">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="additional_notes" class="form-label fw-bold">Additional Notes (Optional)</label>
+                            <textarea class="form-control rounded-3 p-3" id="additional_notes" name="additional_notes" rows="3" placeholder="Provide any additional details about the issue..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-3 mt-5">
+                            <a href="{% url 'orders:my_orders' %}" class="btn btn-light rounded-pill px-4 fw-bold">Cancel</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">Submit Request</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleUPIField() {
+        const refundMethod = document.getElementById('refund_method').value;
+        const upiFieldContainer = document.getElementById('upi_field_container');
+        const upiInput = document.getElementById('upi_id');
+        
+        if (refundMethod === 'UPI') {
+            upiFieldContainer.style.display = 'block';
+            upiInput.required = true;
+        } else {
+            upiFieldContainer.style.display = 'none';
+            upiInput.required = false;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-4 pt-5 pb-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'store:index' %}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ product.category.get_absolute_url }}" class="text-decoration-none text-muted">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active fw-bold text-body" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-5 position-relative">
+        <!-- Product Gallery (Left) -->
+        <div class="col-lg-7 mb-4 mb-lg-0">
+            <div class="d-flex flex-column gap-3">
+                <div class="product-img-container glass-card p-4 rounded-4 d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height: 500px; background-color: var(--surface-bg);">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" id="main-product-image" data-default-src="{{ product.image.url }}" class="img-fluid rounded-3" alt="{{ product.name }}" style="max-height: 600px; object-fit: contain; transition: opacity 0.4s ease, transform 0.4s ease;">
+                    {% elif variants.first.image %}
+                        <img src="{{ variants.first.image.url }}" id="main-product-image" data-default-src="{{ variants.first.image.url }}" class="img-fluid rounded-3" alt="{{ product.name }}" style="max-height: 600px; object-fit: contain; transition: opacity 0.4s ease, transform 0.4s ease;">
+                    {% else %}
+                        <img src="https://placehold.co/600x600?text=No+Image" id="main-product-image" data-default-src="https://placehold.co/600x600?text=No+Image" class="img-fluid rounded-3 opacity-50" alt="{{ product.name }}" style="max-height: 600px; object-fit: contain; transition: opacity 0.4s ease, transform 0.4s ease;">
+                    {% endif %}
+                    
+                    <!-- Wishlist Toggle -->
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-4 shadow-sm wishlist-toggle-btn d-flex align-items-center justify-content-center" data-product-id="{{ product.id }}" style="z-index: 10; width: 44px; height: 44px;">
+                        <i class="fa-heart fs-4 {% if product.id in wishlist_product_ids %}fa-solid text-danger{% else %}fa-regular text-muted{% endif %}"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <!-- Thumbnails (If variants have images or we have multiple images) -->
+                {% if unique_images|length > 1 %}
+                <div class="d-flex gap-3 overflow-auto pb-2" style="scrollbar-width: none;">
+                    {% for img_url in unique_images %}
+                        <div class="glass-card p-2 rounded-3 cursor-pointer thumbnail-container {% if forloop.first %}border-primary opacity-100{% else %}border-transparent opacity-75{% endif %} hover-opacity-100" onclick="updateMainImage('{{ img_url }}', this)" style="width: 80px; height: 80px; min-width: 80px; transition: all 0.2s;">
+                            <img src="{{ img_url }}" class="img-fluid h-100 w-100" style="object-fit: cover; border-radius: 0.5rem;" alt="Thumbnail">
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Info (Right Sticky) -->
+        <div class="col-lg-5">
+            <div class="sticky-top" style="top: 120px;">
+                <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-3 border border-primary border-opacity-25">{{ product.category.name }}</div>
+                
+                <h1 class="display-5 fw-bold font-heading mb-3" style="line-height: 1.1;">{{ product.name }}</h1>
+                
+                <div class="d-flex align-items-center mb-4 gap-3">
+                    <div class="d-flex align-items-center bg-body-tertiary px-3 py-1 rounded-pill">
+                        <i class="fa-solid fa-star text-warning me-2"></i> 
+                        <span class="fw-bold">{{ product.average_rating|floatformat:1 }}</span>
+                    </div>
+                    <a href="#reviews" class="text-muted text-decoration-none hover-primary transition-all">Read {{ reviews.count }} Reviews</a>
+                </div>
+
+                <div class="mb-4">
+                    <h2 class="display-6 fw-bold text-gradient mb-0">₹{{ product.price }}</h2>
+                    <p class="text-muted small mt-1">Inclusive of all taxes</p>
+                </div>
+                
+                <div class="mb-5 lead text-muted" style="line-height: 1.6; font-size: 1.1rem;">
+                    {{ product.description|linebreaks }}
+                </div>
+
+                <hr class="mb-4 opacity-10">
+
+                <form action="{% url 'orders:cart_add' product.id %}" method="POST" id="addToCartForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action_type" id="action_type" value="add">
+                    
+                    {% if variants %}
+                    <div class="mb-5">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="form-label fw-bold font-heading fs-5 mb-0">Select Option</label>
+                        </div>
+                        <div class="d-grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+                            {% for variant in variants %}
+                                <div>
+                                    <input type="radio" class="btn-check variant-radio" name="variant" id="variant_{{ variant.id }}" value="{{ variant.id }}" data-image-url="{% if variant.image %}{{ variant.image.url }}{% endif %}" {% if forloop.first %}checked{% endif %}>
+                                    <label class="btn btn-outline-secondary w-100 py-3 rounded-4 border-2 d-flex flex-column align-items-center justify-content-center h-100" for="variant_{{ variant.id }}" style="transition: all 0.2s;">
+                                        <span class="fw-bold mb-1 text-body">{% if variant.size != 'NA' %}{{ variant.get_size_display }}{% endif %} {% if variant.color %}{{ variant.color }}{% endif %}</span>
+                                        {% if variant.additional_price > 0 %}
+                                            <span class="small text-muted">+₹{{ variant.additional_price }}</span>
+                                        {% else %}
+                                            <span class="small text-muted">Included</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="glass-card p-4 rounded-4 mb-4 bg-surface shadow-sm">
+                        <div class="row align-items-center">
+                            <div class="col-4 border-end">
+                                <label class="form-label text-muted small fw-bold text-uppercase tracking-wider mb-2">Quantity</label>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary border-0 px-2" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">-</button>
+                                    <input type="number" name="quantity" class="form-control text-center border-0 bg-transparent fw-bold fs-5 shadow-none px-0" value="1" min="1" max="{{ product.stock }}">
+                                    <button class="btn btn-outline-secondary border-0 px-2" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">+</button>
+                                </div>
+                            </div>
+                            <div class="col-8 ps-4">
+                                {% if product.stock > 0 %}
+                                    <div class="d-flex align-items-center gap-2 text-success fw-bold mb-1">
+                                        <div class="rounded-circle bg-success bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                            <i class="fa-solid fa-check small text-success"></i>
+                                        </div>
+                                        In Stock and Ready to Ship
+                                    </div>
+                                    <div class="small text-muted">Usually dispatched within 24 hours</div>
+                                {% else %}
+                                    <div class="d-flex align-items-center gap-2 text-danger fw-bold mb-1">
+                                        <div class="rounded-circle bg-danger bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                            <i class="fa-solid fa-xmark small text-danger"></i>
+                                        </div>
+                                        Currently Out of Stock
+                                    </div>
+                                    <div class="small text-muted">Please check back later</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if product.stock > 0 %}
+                        <div class="d-flex gap-3">
+                            <button type="button" class="btn btn-outline-primary w-50 btn-lg rounded-pill fw-bold shadow-sm py-3 d-flex align-items-center justify-content-center gap-2" id="addToBagBtn" style="font-size: 1.1rem; transition: transform 0.2s, box-shadow 0.2s;">
+                                <i class="fa-solid fa-bag-shopping"></i> Add to Bag
+                            </button>
+                            <button type="button" class="btn btn-primary w-50 btn-lg rounded-pill fw-bold shadow-lg py-3 d-flex align-items-center justify-content-center gap-2" id="buyNowBtn" style="font-size: 1.1rem; transition: transform 0.2s, box-shadow 0.2s;">
+                                <i class="fa-solid fa-bolt"></i> Buy Now
+                            </button>
+                        </div>
+                    {% else %}
+                        <button type="button" class="btn btn-secondary w-100 btn-lg rounded-pill fw-bold py-3 disabled">
+                            Sold Out
+                        </button>
+                    {% endif %}
+                    
+                    <div class="mt-4 text-center">
+                        <div class="d-flex align-items-center justify-content-center gap-4 text-muted small">
+                            <span><i class="fa-solid fa-truck-fast me-1"></i> Free Shipping</span>
+                            <span><i class="fa-solid fa-rotate-left me-1"></i> Free Returns</span>
+                            <span><i class="fa-solid fa-shield-halved me-1"></i> Secure Checkout</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Review Summary & Reviews -->
+    <div class="row mt-5 pt-5 border-top" id="reviews">
+        <div class="col-lg-8 mx-auto">
+            <h3 class="fw-bold font-heading text-center mb-5 display-6">Customer Reviews</h3>
+            
+            {% if ai_summary %}
+            <div class="glass-card p-5 rounded-4 mb-5 position-relative overflow-hidden shadow-lg" style="background: linear-gradient(145deg, rgba(var(--bs-primary-rgb), 0.05) 0%, rgba(var(--bs-warning-rgb), 0.05) 100%); border: 1px solid rgba(var(--bs-warning-rgb), 0.2);">
+                <div class="position-absolute top-0 end-0 p-4 opacity-10" style="transform: rotate(15deg) scale(1.5);">
+                    <i class="fa-solid fa-wand-magic-sparkles display-1 text-warning"></i>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-robot text-warning fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold m-0 font-heading">AI Review Summary</h4>
+                </div>
+                <p class="lead mb-0" style="line-height: 1.8;">{{ ai_summary|linebreaks }}</p>
+            </div>
+            {% endif %}
+
+            <div class="reviews-list">
+                {% for review in reviews %}
+                <div class="glass-card p-4 rounded-4 mb-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-5 shadow-sm" style="width: 48px; height: 48px;">
+                                {{ review.user.username|make_list|first|upper }}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 font-heading fs-5">{{ review.user.username }}</h6>
+                                <div class="text-muted small"><i class="fa-regular fa-clock me-1"></i> {{ review.created|date:"M d, Y" }}</div>
+                            </div>
+                        </div>
+                        <div class="bg-body-tertiary px-3 py-1 rounded-pill text-warning d-flex align-items-center gap-1 shadow-sm">
+                            <span class="fw-bold text-body">{{ review.rating }}.0</span>
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="mb-0 fs-6 text-muted" style="line-height: 1.6;">{{ review.comment }}</p>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <div class="bg-body-tertiary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                        <i class="fa-regular fa-comment-dots fs-1 text-muted"></i>
+                    </div>
+                    <h4 class="fw-bold font-heading">No reviews yet</h4>
+                    <p class="text-muted">Be the first to review this product!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-check:checked + .btn-outline-secondary {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        color: var(--bs-primary);
+    }
+    
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .hover-opacity-100:hover {
+        opacity: 1 !important;
+        border-color: var(--bs-primary) !important;
+    }
+    
+    .border-transparent {
+        border: 1px solid transparent;
+    }
+    
+    .product-img-container:hover #main-product-image {
+        transform: scale(1.03);
+    }
+</style>
+
+<script>
+function updateMainImage(url, thumbnailElement) {
+    const mainImage = document.getElementById('main-product-image');
+    if (!mainImage) return;
+    
+    // Update active state on thumbnails
+    document.querySelectorAll('.thumbnail-container').forEach(el => {
+        el.classList.remove('border-primary', 'opacity-100');
+        el.classList.add('border-transparent', 'opacity-75');
+    });
+    
+    thumbnailElement.classList.remove('border-transparent', 'opacity-75');
+    thumbnailElement.classList.add('border-primary', 'opacity-100');
+    
+    // Fade image
+    mainImage.style.opacity = '0';
+    setTimeout(() => {
+        mainImage.src = url;
+        mainImage.style.opacity = '1';
+    }, 200);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const mainImage = document.getElementById('main-product-image');
+    const variantRadios = document.querySelectorAll('.variant-radio');
+    
+    if (mainImage && variantRadios.length > 0) {
+        variantRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const variantImageUrl = this.getAttribute('data-image-url');
+                if (variantImageUrl) {
+                    // Try to find the corresponding thumbnail to make it active, if not, just swap image
+                    let thumbFound = false;
+                    document.querySelectorAll('.thumbnail-container img').forEach(img => {
+                        if (img.src.includes(variantImageUrl)) {
+                            updateMainImage(variantImageUrl, img.parentElement);
+                            thumbFound = true;
+                        }
+                    });
+                    
+                    if (!thumbFound) {
+                        mainImage.style.opacity = '0';
+                        setTimeout(() => {
+                            mainImage.src = variantImageUrl;
+                            mainImage.style.opacity = '1';
+                        }, 200);
+                    }
+                }
+            });
+        });
+    }
+});
+</script>
+<script src="{% static 'js/product-detail.js' %}"></script>
+{% endblock %}

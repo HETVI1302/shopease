@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Details #{{ order.id }} - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold font-outfit text-primary mb-0">
+      <a href="{% url 'orders:my_orders' %}" class="text-decoration-none me-2"><i
+          class="fa-solid fa-arrow-left"></i></a>
+      Order Details #{{ order.id }}
+    </h2>
+    {% if order.return_requests.exists %}
+    <div class="d-flex gap-2">
+      {% with req=order.return_requests.last %}
+      {% if req.status == 'PICKED_UP' %}
+      <span class="badge bg-info fs-6 text-dark"><i class="fa-solid fa-truck me-1"></i> 🚚 Item Picked Up - Processing
+        Refund</span>
+      {% elif req.status == 'REFUNDED' %}
+      <span class="badge bg-success fs-6"><i class="fa-solid fa-check me-1"></i> ✅ Refund of ₹{{ order.get_total_cost }}
+        Credited to Wallet</span>
+      {% elif req.status == 'PICKUP_ASSIGNED' %}
+      <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-box me-1"></i> 📦 Pickup Assigned to
+        Rider</span>
+      {% elif req.status == 'REQUESTED' %}
+      <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-hourglass-half me-1"></i> ⏳ Return Request
+        Under Review</span>
+      {% elif req.status == 'REJECTED' %}
+      <span class="badge bg-danger fs-6 text-white"><i class="fa-solid fa-circle-xmark me-1"></i> ❌ Return
+        Rejected</span>
+      {% else %}
+      <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{
+        req.get_status_display }}</span>
+      {% endif %}
+      {% endwith %}
+    </div>
+    {% elif order.status == 'Delivered' %}
+    <div class="d-flex gap-2">
+      <a href="{% url 'orders:invoice_pdf' order.id %}" class="btn btn-outline-primary rounded-pill"><i
+          class="fa-solid fa-file-pdf"></i> Download Invoice</a>
+      <button type="button" class="btn btn-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#returnModal">
+        <i class="fa-solid fa-arrow-rotate-left"></i> Request Return
+      </button>
+    </div>
+    {% elif order.status == 'Return Requested' or order.status == 'Return Approved' or order.status == 'Refunded' or
+    order.status == 'PICKED_UP' %}
+    <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-triangle-exclamation"></i> {{ order.status
+      }}</span>
+    {% endif %}
+  </div>
+
+  <div class="row">
+    <!-- Order Summary & Progress -->
+    <div class="col-lg-8 mb-4">
+      <div class="glass-card rounded-4 p-4 mb-4">
+        <h5 class="fw-bold border-bottom pb-2 mb-3">Order Status</h5>
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <small class="text-muted text-uppercase fw-bold">Date & Time</small>
+            <p class="mb-0 fw-bold">{{ order.created|date:"M d, Y H:i" }}</p>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted text-uppercase fw-bold">Payment Mode</small>
+            <p class="mb-0 fw-bold">{{ order.payment_method }}
+              {% if order.paid %}<span class="badge bg-success ms-1">Paid</span>{% else %}<span
+                class="badge bg-secondary ms-1">Pending</span>{% endif %}
+            </p>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted text-uppercase fw-bold">Total Amount</small>
+            <p class="mb-0 fw-bold text-primary">₹{{ order.get_total_cost }}</p>
+          </div>
+        </div>
+
+        <!-- DYNAMIC ORDER & RETURN TIMELINE -->
+        <div class="order-timeline-container my-4 p-3 bg-white rounded-4 border border-pink">
+          {% if return_req.status == 'REJECTED' %}
+          <div class="alert alert-danger rounded-3 mb-3 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-circle-xmark fs-4 text-danger"></i>
+            <div>
+              <strong class="d-block">Return Request Rejected</strong>
+              <span class="small">{% if return_req.admin_remark %}<strong>Reason:</strong> {{ return_req.admin_remark
+                }}{% else %}Your return request was rejected by seller/admin.{% endif %}</span>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if return_req.status == 'REJECTED' %}
+          <!-- REJECTED RETURN TIMELINE (2 STEPS ONLY) -->
+          <div class="d-flex justify-content-between position-relative mb-2 px-5">
+            <div class="progress position-absolute top-50 start-0 translate-middle-y w-100"
+              style="height: 4px; z-index: 1;">
+              <div class="progress-bar bg-danger" role="progressbar" style="width: 100%;"></div>
+            </div>
+
+            <!-- Step 1: Delivered -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle bg-success text-white mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-check-lg"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Delivered</small>
+            </div>
+
+            <!-- Step 2: Return Rejected -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle bg-danger text-white mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-x-lg"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-danger">Return Rejected</small>
+            </div>
+          </div>
+          {% elif order.status in 'RETURN_REQUESTED,PICKUP_ASSIGNED,PICKED_UP,REFUNDED,Return Requested,Return
+          Approved,Refunded,Picked Up' or return_request or return_req or order.return_requests.exists %}
+          <!-- REVERSE LOGISTICS (RETURN) TIMELINE -->
+          <div class="d-flex justify-content-between position-relative mb-2">
+            <div class="progress position-absolute top-50 start-0 translate-middle-y w-100"
+              style="height: 4px; z-index: 1;">
+              <div class="progress-bar bg-pink" role="progressbar"
+                style="width: {% if order.status == 'RETURN_REQUESTED' or order.status == 'Return Requested' or order.status == 'Return Approved' or return_req.status == 'REQUESTED' or return_req.status == 'APPROVED' %}25%{% elif order.status == 'PICKUP_ASSIGNED' or return_req.status == 'PICKUP_ASSIGNED' %}50%{% elif order.status == 'PICKED_UP' or order.status == 'Picked Up' or return_req.status == 'PICKED_UP' or return_req.status == 'RECEIVED' %}75%{% elif order.status == 'REFUNDED' or order.status == 'Refunded' or return_req.status == 'REFUNDED' %}100%{% else %}25%{% endif %};">
+              </div>
+            </div>
+
+            <!-- Step 1: Delivered -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle bg-success text-white mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-check-lg"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Delivered</small>
+            </div>
+
+            <!-- Step 2: Return Requested -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle bg-pink text-white mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Return Req</small>
+            </div>
+
+            <!-- Step 3: Pickup Assigned -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle {% if order.status in 'PICKUP_ASSIGNED,PICKED_UP,REFUNDED,Picked Up,Refunded' or return_req.status in 'PICKUP_ASSIGNED,PICKED_UP,RECEIVED,REFUNDED' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-person-badge"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Rider Assigned</small>
+            </div>
+
+            <!-- Step 4: Item Picked Up -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle {% if order.status in 'PICKED_UP,REFUNDED,Picked Up,Refunded' or return_req.status in 'PICKED_UP,RECEIVED,REFUNDED' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-truck"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Item Picked Up</small>
+            </div>
+
+            <!-- Step 5: Refund Credited -->
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle {% if order.status in 'REFUNDED,Refunded' or return_req.status == 'REFUNDED' %}bg-success text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-wallet2"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Refunded</small>
+            </div>
+          </div>
+          {% else %}
+          <!-- STANDARD FORWARD DELIVERY TIMELINE -->
+          <div class="d-flex justify-content-between position-relative mb-2">
+            <div class="progress position-absolute top-50 start-0 translate-middle-y w-100"
+              style="height: 4px; z-index: 1;">
+              <div class="progress-bar bg-pink" role="progressbar"
+                style="width: {% if order.status == 'PLACED' or order.status == 'Placed' %}0%{% elif order.status == 'ASSIGNED' or order.status == 'Assigned' %}33%{% elif order.status == 'OUT_FOR_DELIVERY' or order.status == 'Out for Delivery' %}66%{% elif order.status == 'DELIVERED' or order.status == 'Delivered' %}100%{% else %}0%{% endif %};">
+              </div>
+            </div>
+
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle bg-pink text-white mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-receipt"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Placed</small>
+            </div>
+
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle {% if order.status in 'ASSIGNED,OUT_FOR_DELIVERY,DELIVERED,Assigned,Out for Delivery,Delivered' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-box-seam"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Assigned</small>
+            </div>
+
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle {% if order.status in 'OUT_FOR_DELIVERY,DELIVERED,Out for Delivery,Delivered' %}bg-pink text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-bicycle"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Out for Delivery</small>
+            </div>
+
+            <div class="text-center position-relative" style="z-index: 2;">
+              <div
+                class="step-circle {% if order.status in 'DELIVERED,Delivered' %}bg-success text-white{% else %}bg-light border text-muted{% endif %} mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+              <small class="d-block mt-1 fw-bold text-dark">Delivered</small>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if order.status in 'Return Requested,Return Approved,Refunded,PICKED_UP,PICKUP_ASSIGNED,RETURN_REQUESTED' or
+        return_req or return_request %}
+        <div
+          class="alert {% if return_req.status == 'REJECTED' %}alert-danger{% else %}alert-warning{% endif %} mt-4 mb-0">
+          <h6 class="fw-bold mb-1"><i class="fa-solid fa-rotate-left me-1"></i> Return Information</h6>
+          <p class="mb-1 small"><strong>Status:</strong>
+            {% if return_req %}
+            <span
+              class="badge {% if return_req.status == 'REJECTED' %}bg-danger text-white{% else %}bg-warning text-dark{% endif %}">
+              {{ return_req.get_status_display }}
+            </span>
+            {% else %}
+            {{ order.status }}
+            {% endif %}
+          </p>
+          <p class="mb-1 small"><strong>Reason:</strong> {{ return_req.get_reason_display|default:return_req.reason }}
+          </p>
+          <p class="mb-1 small"><strong>Refund Method:</strong> {{
+            return_req.get_refund_method_display|default:return_req.refund_method }}</p>
+          {% if return_req.additional_notes %}
+          <p class="mb-1 small"><strong>Customer Note:</strong> {{ return_req.additional_notes }}</p>
+          {% endif %}
+          {% if return_req.status == 'REJECTED' and return_req.admin_remark %}
+          <p class="mb-0 small text-danger fw-bold"><strong>Rejection Remark:</strong> {{ return_req.admin_remark }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Ordered Items List -->
+      <div class="glass-card rounded-4 p-4">
+        <h5 class="fw-bold border-bottom pb-2 mb-3">Ordered Items</h5>
+        <div class="table-responsive">
+          <table class="table table-borderless align-middle mb-0">
+            <thead class="border-bottom">
+              <tr>
+                <th>Item</th>
+                <th class="text-center">Price</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order.items.all %}
+              <tr class="border-bottom">
+                <td>
+                  <div class="d-flex align-items-center">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="rounded me-3"
+                      style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                      style="width: 60px; height: 60px;">
+                      <i class="fa-solid fa-image text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                      <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
+                      {% if item.variant %}
+                      <small class="text-muted">
+                        {% if item.variant.size != 'NA' %}Size: {{ item.variant.get_size_display }}{% endif %}
+                        {% if item.variant.color %} Color: {{ item.variant.color }}{% endif %}
+                      </small>
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">₹{{ item.price }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end fw-bold">₹{{ item.get_cost }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+          <div style="width: 300px;">
+            {% if order.discount_amount > 0 %}
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Discount</span>
+              <span class="text-success">-₹{{ order.discount_amount }}</span>
+            </div>
+            {% endif %}
+            <div class="d-flex justify-content-between border-top pt-2">
+              <span class="fw-bold fs-5">Grand Total</span>
+              <span class="fw-bold fs-5 text-primary">₹{{ order.get_total_cost }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery Information -->
+    <div class="col-lg-4">
+      <div class="glass-card rounded-4 p-4 mb-4">
+        <h5 class="fw-bold border-bottom pb-2 mb-3">Shipping Address</h5>
+        <p class="mb-1 fw-bold">{{ order.first_name }} {{ order.last_name }}</p>
+        <p class="mb-1 text-muted">{{ order.address }}</p>
+        <p class="mb-1 text-muted">{{ order.city }}, {{ order.postal_code }}</p>
+        <p class="mb-0 text-muted"><i class="fa-solid fa-envelope me-1"></i> {{ order.email }}</p>
+      </div>
+
+      {% if order.delivery_partner %}
+      <div class="glass-card rounded-4 p-4 bg-primary-subtle border border-primary">
+        <h5 class="fw-bold border-bottom border-primary pb-2 mb-3 text-primary">Delivery Partner</h5>
+        <div class="d-flex align-items-center">
+          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+            style="width: 50px; height: 50px;">
+            <i class="fa-solid fa-motorcycle fs-4"></i>
+          </div>
+          <div>
+            <p class="mb-0 fw-bold">{{ order.delivery_partner.first_name }} {{ order.delivery_partner.last_name }}</p>
+            <p class="mb-0 text-muted small"><i class="fa-solid fa-phone me-1"></i> Will contact upon arrival</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Return Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card rounded-4 border-0">
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold font-outfit" id="returnModalLabel">Request Return / Refund</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'orders:request_return' order.id %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-4">Please let us know why you are returning this order. Once submitted, our team
+            will review your request.</p>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Reason for Return</label>
+            <select name="return_reason" class="form-select glass-input" required>
+              <option value="" disabled selected>Select a reason...</option>
+              <option value="Defective / Damaged Item">Defective / Damaged Item</option>
+              <option value="Wrong Size / Color Received">Wrong Size / Color Received</option>
+              <option value="Product Not as Described">Product Not as Described</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Additional Comments (Optional)</label>
+            <textarea name="return_comment" class="form-control glass-input" rows="3"
+              placeholder="Please provide any additional details..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger rounded-pill">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
