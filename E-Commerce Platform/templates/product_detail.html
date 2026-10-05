@@ -179,6 +179,80 @@
             </div>
             {% endif %}
 
+            <!-- Write / Edit Review Section -->
+            <div class="glass-card p-4 rounded-4 mb-4 shadow-sm border border-pink" style="background: rgba(var(--bs-primary-rgb), 0.02);">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <h5 class="fw-bold mb-1 font-heading">
+                            {% if user_review %}Your Review{% else %}Share Your Feedback{% endif %}
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            {% if user_review %}You rated this product {{ user_review.rating }}★. You can update or delete your review.{% else %}Have you bought or used this product? Share your experience with others.{% endif %}
+                        </p>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+                            data-bs-toggle="collapse" data-bs-target="#productReviewFormCollapse" aria-expanded="false" aria-controls="productReviewFormCollapse">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        {% if user_review %}Edit Review ({{ user_review.rating }}★){% else %}Write a Review{% endif %}
+                    </button>
+                    {% else %}
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign in to Review
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if user.is_authenticated %}
+                <div class="collapse mt-4 pt-3 border-top" id="productReviewFormCollapse">
+                    <form action="{% url 'store:add_review' product.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-4 text-center">
+                            <label class="form-label fw-bold d-block mb-2">Overall Rating <span class="text-danger">*</span></label>
+                            <div class="star-rating d-inline-flex flex-row-reverse justify-content-center">
+                                <input type="radio" id="p_star5" name="rating" value="5" {% if user_review and user_review.rating == 5 or not user_review %}checked{% endif %} required />
+                                <label for="p_star5" title="5 - Excellent"><i class="fa-solid fa-star"></i></label>
+                                
+                                <input type="radio" id="p_star4" name="rating" value="4" {% if user_review and user_review.rating == 4 %}checked{% endif %} />
+                                <label for="p_star4" title="4 - Good"><i class="fa-solid fa-star"></i></label>
+                                
+                                <input type="radio" id="p_star3" name="rating" value="3" {% if user_review and user_review.rating == 3 %}checked{% endif %} />
+                                <label for="p_star3" title="3 - Average"><i class="fa-solid fa-star"></i></label>
+                                
+                                <input type="radio" id="p_star2" name="rating" value="2" {% if user_review and user_review.rating == 2 %}checked{% endif %} />
+                                <label for="p_star2" title="2 - Poor"><i class="fa-solid fa-star"></i></label>
+                                
+                                <input type="radio" id="p_star1" name="rating" value="1" {% if user_review and user_review.rating == 1 %}checked{% endif %} />
+                                <label for="p_star1" title="1 - Terrible"><i class="fa-solid fa-star"></i></label>
+                            </div>
+                            <div class="small text-muted mt-1 rating-text">Tap a star to rate (1 to 5 stars)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Your Review <span class="text-danger">*</span></label>
+                            <textarea name="comment" class="form-control rounded-3" rows="4" placeholder="What did you like or dislike? How was the quality, fit, and performance?" required>{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if user_review %}
+                                <button type="submit" formaction="{% url 'store:delete_review' user_review.id %}" class="btn btn-outline-danger btn-sm rounded-pill" onclick="return confirm('Are you sure you want to delete your review?');">
+                                    <i class="fa-solid fa-trash me-1"></i> Delete Review
+                                </button>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-toggle="collapse" data-bs-target="#productReviewFormCollapse">Cancel</button>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                                    <i class="fa-solid fa-paper-plane me-1"></i> {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
             <div class="reviews-list">
                 {% for review in reviews %}
                 <div class="glass-card p-4 rounded-4 mb-4 shadow-sm">
@@ -236,6 +310,34 @@
     .product-img-container:hover #main-product-image {
         transform: scale(1.03);
     }
+
+    .star-rating {
+        display: inline-flex;
+        flex-direction: row-reverse;
+        justify-content: center;
+        gap: 8px;
+    }
+    .star-rating input[type="radio"] {
+        display: none !important;
+    }
+    .star-rating label {
+        color: #dee2e6;
+        cursor: pointer;
+        padding: 2px 4px;
+        font-size: 1.8rem;
+        transition: color 0.15s ease, transform 0.15s ease;
+    }
+    .star-rating:hover label {
+        color: #dee2e6 !important;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+        color: #ffc107 !important;
+        transform: scale(1.15);
+    }
+    .star-rating input[type="radio"]:checked ~ label {
+        color: #ffc107 !important;
+    }
 </style>
 
 <script>
@@ -289,6 +391,27 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Star rating caption listener
+    document.querySelectorAll('.star-rating').forEach(function(group) {
+        var card = group.closest('.glass-card') || group.closest('form');
+        var textEl = card ? card.querySelector('.rating-text') : null;
+        var ratingLabels = {
+            '5': '5 Stars - Excellent! ⭐⭐⭐⭐⭐',
+            '4': '4 Stars - Good! ⭐⭐⭐⭐',
+            '3': '3 Stars - Average ⭐⭐⭐',
+            '2': '2 Stars - Poor ⭐⭐',
+            '1': '1 Star - Terrible ⭐'
+        };
+        group.querySelectorAll('input[type="radio"]').forEach(function(input) {
+            input.addEventListener('change', function() {
+                if (textEl && ratingLabels[this.value]) {
+                    textEl.textContent = ratingLabels[this.value];
+                    textEl.className = 'small fw-bold text-warning mt-1 rating-text';
+                }
+            });
+        });
+    });
 });
 </script>
 <script src="{% static 'js/product-detail.js' %}"></script>

@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from .models import Cart, CartItem, Order, OrderItem, Coupon
-from store.models import Product, ProductVariant
+from store.models import Product, ProductVariant, Review
 from .invoice_generator import render_to_pdf
 from django.utils import timezone
 from django.db import transaction
@@ -500,12 +500,26 @@ def my_orders(request):
     orders = Order.objects.filter(user=request.user).order_by('-created')
     return render(request, 'customer_orders.html', {'orders': orders})
 
+@csrf_exempt
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return_req = order.return_requests.last()
+    
+    order_items = list(order.items.select_related('product', 'variant').all())
+    user_reviews = {
+        r.product_id: r
+        for r in Review.objects.filter(
+            user=request.user,
+            product_id__in=[item.product_id for item in order_items]
+        )
+    }
+    for item in order_items:
+        item.user_review = user_reviews.get(item.product_id)
+
     return render(request, 'orders/order_detail.html', {
         'order': order,
+        'order_items': order_items,
         'return_req': return_req,
         'return_request': return_req
     })
@@ -515,6 +529,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import ReturnRequest
 
+@csrf_exempt
 @login_required
 def request_return(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)

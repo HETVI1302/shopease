@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.db.models import Q
+from django.contrib import messages
 from .models import Product, Category, Review, Wishlist
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -127,9 +128,15 @@ def product_list(request, category_slug=None):
         'query': query,
     })
 
+@csrf_exempt
 def product_detail(request, id, slug):
+    if request.method == 'POST':
+        return add_review(request, id)
     product = get_object_or_404(Product, id=id, slug=slug)
     reviews = product.reviews.all()
+    user_review = None
+    if request.user.is_authenticated:
+        user_review = reviews.filter(user=request.user).first()
     
     # AI Review Summary Logic
     ai_summary = ""
@@ -150,10 +157,65 @@ def product_detail(request, id, slug):
     return render(request, 'product_detail.html', {
         'product': product,
         'reviews': reviews,
+        'user_review': user_review,
         'ai_summary': ai_summary,
         'variants': variants,
         'unique_images': unique_images,
     })
+
+@csrf_exempt
+@login_required
+def add_review(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, id=product_id)
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment', '').strip()
+
+        if not rating:
+            messages.error(request, 'Please select a star rating (1 to 5 stars).')
+            return redirect(request.META.get('HTTP_REFERER', product.get_absolute_url()))
+
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                raise ValueError()
+        except ValueError:
+            messages.error(request, 'Invalid rating value.')
+            return redirect(request.META.get('HTTP_REFERER', product.get_absolute_url()))
+
+        if not comment:
+            messages.error(request, 'Please provide a comment for your review.')
+            return redirect(request.META.get('HTTP_REFERER', product.get_absolute_url()))
+
+        review, created = Review.objects.update_or_create(
+            product=product,
+            user=request.user,
+            defaults={
+                'rating': rating,
+                'comment': comment
+            }
+        )
+
+        if created:
+            messages.success(request, f'Thank you! Your review for "{product.name}" has been submitted successfully.')
+        else:
+            messages.success(request, f'Your review for "{product.name}" has been updated successfully.')
+
+        return redirect(request.META.get('HTTP_REFERER', product.get_absolute_url()))
+
+    return redirect('store:index')
+
+@csrf_exempt
+@login_required
+def delete_review(request, review_id):
+    if request.method == 'POST':
+        review = get_object_or_404(Review, id=review_id, user=request.user)
+        product_name = review.product.name
+        referer = request.META.get('HTTP_REFERER', review.product.get_absolute_url())
+        review.delete()
+        messages.info(request, f'Your review for "{product_name}" has been removed.')
+        return redirect(referer)
+    return redirect('store:index')
 
 import json
 import requests

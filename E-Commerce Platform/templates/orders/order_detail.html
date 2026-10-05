@@ -29,8 +29,7 @@
       <span class="badge bg-danger fs-6 text-white"><i class="fa-solid fa-circle-xmark me-1"></i> ❌ Return
         Rejected</span>
       {% else %}
-      <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{
-        req.get_status_display }}</span>
+      <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ req.get_status_display }}</span>
       {% endif %}
       {% endwith %}
     </div>
@@ -42,10 +41,8 @@
         <i class="fa-solid fa-arrow-rotate-left"></i> Request Return
       </button>
     </div>
-    {% elif order.status == 'Return Requested' or order.status == 'Return Approved' or order.status == 'Refunded' or
-    order.status == 'PICKED_UP' %}
-    <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-triangle-exclamation"></i> {{ order.status
-      }}</span>
+    {% elif order.status == 'Return Requested' or order.status == 'Return Approved' or order.status == 'Refunded' or order.status == 'PICKED_UP' %}
+    <span class="badge bg-warning fs-6 text-dark"><i class="fa-solid fa-triangle-exclamation"></i> {{ order.status }}</span>
     {% endif %}
   </div>
 
@@ -79,8 +76,7 @@
             <i class="fa-solid fa-circle-xmark fs-4 text-danger"></i>
             <div>
               <strong class="d-block">Return Request Rejected</strong>
-              <span class="small">{% if return_req.admin_remark %}<strong>Reason:</strong> {{ return_req.admin_remark
-                }}{% else %}Your return request was rejected by seller/admin.{% endif %}</span>
+              <span class="small">{% if return_req.admin_remark %}<strong>Reason:</strong> {{ return_req.admin_remark }}{% else %}Your return request was rejected by seller/admin.{% endif %}</span>
             </div>
           </div>
           {% endif %}
@@ -113,8 +109,7 @@
               <small class="d-block mt-1 fw-bold text-danger">Return Rejected</small>
             </div>
           </div>
-          {% elif order.status in 'RETURN_REQUESTED,PICKUP_ASSIGNED,PICKED_UP,REFUNDED,Return Requested,Return
-          Approved,Refunded,Picked Up' or return_request or return_req or order.return_requests.exists %}
+          {% elif order.status in 'RETURN_REQUESTED,PICKUP_ASSIGNED,PICKED_UP,REFUNDED,Return Requested,Return Approved,Refunded,Picked Up' or return_request or return_req or order.return_requests.exists %}
           <!-- REVERSE LOGISTICS (RETURN) TIMELINE -->
           <div class="d-flex justify-content-between position-relative mb-2">
             <div class="progress position-absolute top-50 start-0 translate-middle-y w-100"
@@ -223,8 +218,7 @@
           {% endif %}
         </div>
 
-        {% if order.status in 'Return Requested,Return Approved,Refunded,PICKED_UP,PICKUP_ASSIGNED,RETURN_REQUESTED' or
-        return_req or return_request %}
+        {% if order.status in 'Return Requested,Return Approved,Refunded,PICKED_UP,PICKUP_ASSIGNED,RETURN_REQUESTED' or return_req or return_request %}
         <div
           class="alert {% if return_req.status == 'REJECTED' %}alert-danger{% else %}alert-warning{% endif %} mt-4 mb-0">
           <h6 class="fw-bold mb-1"><i class="fa-solid fa-rotate-left me-1"></i> Return Information</h6>
@@ -240,8 +234,7 @@
           </p>
           <p class="mb-1 small"><strong>Reason:</strong> {{ return_req.get_reason_display|default:return_req.reason }}
           </p>
-          <p class="mb-1 small"><strong>Refund Method:</strong> {{
-            return_req.get_refund_method_display|default:return_req.refund_method }}</p>
+          <p class="mb-1 small"><strong>Refund Method:</strong> {{ return_req.get_refund_method_display|default:return_req.refund_method }}</p>
           {% if return_req.additional_notes %}
           <p class="mb-1 small"><strong>Customer Note:</strong> {{ return_req.additional_notes }}</p>
           {% endif %}
@@ -263,10 +256,11 @@
                 <th class="text-center">Price</th>
                 <th class="text-center">Qty</th>
                 <th class="text-end">Total</th>
+                <th class="text-center" style="min-width: 140px;">Review</th>
               </tr>
             </thead>
             <tbody>
-              {% for item in order.items.all %}
+              {% for item in order_items|default:order.items.all %}
               <tr class="border-bottom">
                 <td>
                   <div class="d-flex align-items-center">
@@ -280,7 +274,9 @@
                     </div>
                     {% endif %}
                     <div>
-                      <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
+                      <h6 class="mb-0 fw-bold">
+                        <a href="{{ item.product.get_absolute_url }}" class="text-dark text-decoration-none hover-primary">{{ item.product.name }}</a>
+                      </h6>
                       {% if item.variant %}
                       <small class="text-muted">
                         {% if item.variant.size != 'NA' %}Size: {{ item.variant.get_size_display }}{% endif %}
@@ -293,6 +289,22 @@
                 <td class="text-center">₹{{ item.price }}</td>
                 <td class="text-center">{{ item.quantity }}</td>
                 <td class="text-end fw-bold">₹{{ item.get_cost }}</td>
+                <td class="text-center">
+                  {% if item.user_review %}
+                  <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1"
+                          data-bs-toggle="modal" data-bs-target="#reviewModal{{ item.id }}" title="Click to edit your review">
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <span class="fw-bold">{{ item.user_review.rating }}★</span>
+                    <span class="small text-muted ms-1">(Edit)</span>
+                  </button>
+                  {% else %}
+                  <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1"
+                          data-bs-toggle="modal" data-bs-target="#reviewModal{{ item.id }}">
+                    <i class="fa-regular fa-star text-warning"></i>
+                    <span class="fw-bold">Write Review</span>
+                  </button>
+                  {% endif %}
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -384,4 +396,142 @@
     </div>
   </div>
 </div>
+
+<!-- Review Modals for Ordered Items -->
+{% for item in order_items|default:order.items.all %}
+<div class="modal fade" id="reviewModal{{ item.id }}" tabindex="-1" aria-labelledby="reviewModalLabel{{ item.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card rounded-4 border-0 shadow-lg">
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold font-outfit" id="reviewModalLabel{{ item.id }}">
+          {% if item.user_review %}<i class="fa-solid fa-pen-to-square text-primary me-2"></i>Edit Review{% else %}<i class="fa-solid fa-star text-warning me-2"></i>Rate & Review Product{% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'store:add_review' item.product.id %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <!-- Product Info Card -->
+          <div class="d-flex align-items-center p-3 bg-light rounded-3 mb-3 border">
+            {% if item.product.image %}
+            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="rounded me-3" style="width: 55px; height: 55px; object-fit: cover;">
+            {% else %}
+            <div class="bg-white rounded me-3 d-flex align-items-center justify-content-center border" style="width: 55px; height: 55px;">
+              <i class="fa-solid fa-box text-muted"></i>
+            </div>
+            {% endif %}
+            <div class="flex-grow-1">
+              <h6 class="fw-bold mb-1 text-dark">{{ item.product.name }}</h6>
+              {% if item.variant %}
+              <div class="small text-muted mb-1">
+                {% if item.variant.size != 'NA' %}Size: {{ item.variant.get_size_display }}{% endif %}
+                {% if item.variant.color %}| Color: {{ item.variant.color }}{% endif %}
+              </div>
+              {% endif %}
+              <span class="badge bg-primary-subtle text-primary fw-semibold">₹{{ item.price }}</span>
+            </div>
+          </div>
+
+          <!-- Star Rating -->
+          <div class="mb-4 text-center">
+            <label class="form-label fw-bold d-block mb-2">Overall Rating <span class="text-danger">*</span></label>
+            <div class="star-rating d-inline-flex flex-row-reverse justify-content-center">
+              <input type="radio" id="star5_{{ item.id }}" name="rating" value="5" {% if item.user_review and item.user_review.rating == 5 or not item.user_review %}checked{% endif %} required />
+              <label for="star5_{{ item.id }}" title="5 - Excellent"><i class="fa-solid fa-star"></i></label>
+              
+              <input type="radio" id="star4_{{ item.id }}" name="rating" value="4" {% if item.user_review and item.user_review.rating == 4 %}checked{% endif %} />
+              <label for="star4_{{ item.id }}" title="4 - Good"><i class="fa-solid fa-star"></i></label>
+              
+              <input type="radio" id="star3_{{ item.id }}" name="rating" value="3" {% if item.user_review and item.user_review.rating == 3 %}checked{% endif %} />
+              <label for="star3_{{ item.id }}" title="3 - Average"><i class="fa-solid fa-star"></i></label>
+              
+              <input type="radio" id="star2_{{ item.id }}" name="rating" value="2" {% if item.user_review and item.user_review.rating == 2 %}checked{% endif %} />
+              <label for="star2_{{ item.id }}" title="2 - Poor"><i class="fa-solid fa-star"></i></label>
+              
+              <input type="radio" id="star1_{{ item.id }}" name="rating" value="1" {% if item.user_review and item.user_review.rating == 1 %}checked{% endif %} />
+              <label for="star1_{{ item.id }}" title="1 - Terrible"><i class="fa-solid fa-star"></i></label>
+            </div>
+            <div class="small text-muted mt-1 rating-text">Tap a star to rate (1 to 5 stars)</div>
+          </div>
+
+          <!-- Comment -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Review Comment <span class="text-danger">*</span></label>
+            <textarea name="comment" class="form-control glass-input rounded-3" rows="4" placeholder="What did you like or dislike about this product? How was the quality, fit, and delivery?" required>{% if item.user_review %}{{ item.user_review.comment }}{% endif %}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top d-flex justify-content-between">
+          <div>
+            {% if item.user_review %}
+            <button type="submit" formaction="{% url 'store:delete_review' item.user_review.id %}" class="btn btn-outline-danger btn-sm rounded-pill" onclick="return confirm('Are you sure you want to delete this review?');">
+              <i class="fa-solid fa-trash me-1"></i> Delete Review
+            </button>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+              <i class="fa-solid fa-paper-plane me-1"></i> {% if item.user_review %}Update Review{% else %}Submit Review{% endif %}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<style>
+.star-rating {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+  gap: 8px;
+}
+.star-rating input[type="radio"] {
+  display: none !important;
+}
+.star-rating label {
+  color: #dee2e6;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 1.8rem;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.star-rating:hover label {
+  color: #dee2e6 !important;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: #ffc107 !important;
+  transform: scale(1.15);
+}
+.star-rating input[type="radio"]:checked ~ label {
+  color: #ffc107 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.star-rating').forEach(function(group) {
+    var modal = group.closest('.modal-content') || group.closest('.card, .glass-card');
+    var textEl = modal ? modal.querySelector('.rating-text') : null;
+    var ratingLabels = {
+      '5': '5 Stars - Excellent! ⭐⭐⭐⭐⭐',
+      '4': '4 Stars - Good! ⭐⭐⭐⭐',
+      '3': '3 Stars - Average ⭐⭐⭐',
+      '2': '2 Stars - Poor ⭐⭐',
+      '1': '1 Star - Terrible ⭐'
+    };
+    group.querySelectorAll('input[type="radio"]').forEach(function(input) {
+      input.addEventListener('change', function() {
+        if (textEl && ratingLabels[this.value]) {
+          textEl.textContent = ratingLabels[this.value];
+          textEl.className = 'small fw-bold text-warning mt-1 rating-text';
+        }
+      });
+    });
+  });
+});
+</script>
 {% endblock %}

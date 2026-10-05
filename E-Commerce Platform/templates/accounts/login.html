@@ -10,13 +10,29 @@
             <p class="text-muted" data-i18n="login_subtitle">Sign in to your account</p>
         </div>
         
-        <form method="POST">
+        <form method="POST" id="loginForm">
             {% csrf_token %}
             <div class="mb-3">
-                <input type="text" name="username" class="form-control glass-input py-2" placeholder="Username" required data-i18n-placeholder="username">
+                <input type="text" name="username" id="loginUsername" 
+                       class="form-control glass-input rounded-pill py-2 px-3" 
+                       placeholder="Username" required data-i18n-placeholder="username" 
+                       autocomplete="username" readonly 
+                       onfocus="this.removeAttribute('readonly');" 
+                       onmousedown="this.removeAttribute('readonly');">
             </div>
             <div class="mb-4">
-                <input type="password" name="password" class="form-control glass-input py-2" placeholder="Password" required data-i18n-placeholder="password">
+                <div class="input-group">
+                    <input type="password" name="password" id="loginPassword" 
+                           class="form-control glass-input rounded-start-pill py-2 px-3 border-end-0" 
+                           placeholder="Password" required data-i18n-placeholder="password" 
+                           autocomplete="current-password" readonly 
+                           onfocus="this.removeAttribute('readonly');" 
+                           onmousedown="this.removeAttribute('readonly');">
+                    <button class="btn btn-outline-secondary toggle-password rounded-end-pill glass-input border-start-0 px-3" 
+                            type="button" data-target="loginPassword" title="Show/Hide Password">
+                        <i class="fa-solid fa-eye text-muted"></i>
+                    </button>
+                </div>
             </div>
             
             <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow" data-i18n="login">Login</button>
@@ -28,4 +44,52 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var userField = document.getElementById('loginUsername');
+    var passField = document.getElementById('loginPassword');
+    var userInteracted = false;
+
+    function enableInputs() {
+        if (!userInteracted) {
+            userInteracted = true;
+            if (userField) userField.removeAttribute('readonly');
+            if (passField) passField.removeAttribute('readonly');
+        }
+    }
+
+    // When user clicks or focuses any field, remove readonly so browser displays saved suggestions
+    ['focus', 'mousedown', 'touchstart', 'click'].forEach(function (eventName) {
+        if (userField) userField.addEventListener(eventName, enableInputs);
+        if (passField) passField.addEventListener(eventName, enableInputs);
+    });
+
+    // If browser forcibly populated values before any user click, clear them once on initial load
+    setTimeout(function () {
+        if (!userInteracted) {
+            if (userField && userField.hasAttribute('readonly')) userField.value = '';
+            if (passField && passField.hasAttribute('readonly')) passField.value = '';
+        }
+    }, 50);
+
+    // Password Toggle Show/Hide
+    document.querySelectorAll('.toggle-password').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var inputId = this.getAttribute('data-target');
+            var input = document.getElementById(inputId);
+            var icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
