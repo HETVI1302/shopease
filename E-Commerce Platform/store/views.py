@@ -250,7 +250,7 @@ def ai_chat_response(request):
         category_list_str = "Clothes, Grocery, Jewellery, Toys, Electronics, Yoga"
         catalog_text = "Various premium products available in store."
 
-    gemini_key = getattr(settings, 'GEMINI_API_KEY', '').strip()
+    gemini_key = (getattr(settings, 'GEMINI_API_KEY', '') or getattr(settings, 'GOOGLE_API_KEY', '') or '').strip()
 
     # System prompt strictly instructing ShopEase context
     system_prompt = f"""

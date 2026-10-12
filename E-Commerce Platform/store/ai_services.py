@@ -8,12 +8,16 @@ logger = logging.getLogger(__name__)
 # Using gemini-1.5-flash as default fast model, you can switch to gemini-1.5-pro for more complex tasks
 MODEL_NAME = "gemini-1.5-flash"
 
+def _get_api_key():
+    return getattr(settings, 'GEMINI_API_KEY', None) or getattr(settings, 'GOOGLE_API_KEY', None) or ''
+
 def get_ai_search_intent(query):
     """
     Parses an unstructured search query into categories and keywords.
     E.g., "cheap gifts for kids" -> {"categories": ["Kids", "Toys"], "tags": ["cheap", "gift"]}
     """
-    if not settings.GEMINI_API_KEY:
+    api_key = _get_api_key()
+    if not api_key:
         return {"categories": [], "tags": []}
     
     prompt = f"""
@@ -24,7 +28,7 @@ def get_ai_search_intent(query):
     Do not include markdown blocks, just the JSON string.
     """
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt
@@ -39,8 +43,9 @@ def generate_review_summary(reviews_text):
     """
     Generates a concise 'Pros & Cons' summary from a list of reviews.
     """
-    if not settings.GEMINI_API_KEY or not reviews_text:
-        return "Not enough data for AI summary."
+    api_key = _get_api_key()
+    if not api_key or not reviews_text:
+        return ""
 
     prompt = f"""
     Based on the following customer reviews, generate a very concise summary (max 3-4 sentences) highlighting the main Pros and Cons.
@@ -49,7 +54,7 @@ def generate_review_summary(reviews_text):
     {reviews_text}
     """
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt
@@ -57,13 +62,14 @@ def generate_review_summary(reviews_text):
         return response.text
     except Exception as e:
         logger.error(f"Gemini AI Summary Error: {e}")
-        return "Failed to generate summary."
+        return ""
 
 def auto_generate_product_description(title, tags):
     """
     Generates a catchy product description for the admin panel.
     """
-    if not settings.GEMINI_API_KEY:
+    api_key = _get_api_key()
+    if not api_key:
         return "Please configure GEMINI_API_KEY to generate descriptions."
 
     prompt = f"""
@@ -72,7 +78,7 @@ def auto_generate_product_description(title, tags):
     The description should be professional, highlighting benefits, and formatted with short paragraphs. Max 150 words.
     """
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model='gemini-1.5-pro',
             contents=prompt
@@ -86,7 +92,8 @@ def get_chatbot_response(user_message, context=""):
     """
     Chatbot assistant logic.
     """
-    if not settings.GEMINI_API_KEY:
+    api_key = _get_api_key()
+    if not api_key:
         return "Sorry, the AI assistant is currently offline (Missing API Key)."
 
     system_prompt = f"""
@@ -97,7 +104,7 @@ def get_chatbot_response(user_message, context=""):
     User: {user_message}
     """
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=system_prompt
